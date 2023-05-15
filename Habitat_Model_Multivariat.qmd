@@ -1,0 +1,346 @@
+---
+title: "Habitat_Model_Multivariat"
+format: html
+---
+
+# Clear R environment 
+```{r}
+#clear R environment -------------------------------------------
+rm(list = ls())
+```
+
+# Install and load packages 
+```{r}
+# check for a package, install and load ---------------------------------------
+pkgCheck <- function(x){ 
+  if (!require(x,character.only = TRUE)){
+    install.packages(x,dependencies=TRUE)
+    if(!require(x,character.only = TRUE)) {
+      stop()
+    }
+  }
+}
+
+pkgCheck("raster")
+pkgCheck("spsurvey")
+pkgCheck("terra")
+pkgCheck("raster")
+pkgCheck("ggplot2")
+pkgCheck("tibble")
+pkgCheck("readr")
+pkgCheck("dplyr")
+pkgCheck("tidyr")
+```
+
+
+# 1. Input-Data
+## a. Water Depth
+```{r}
+# Read raster-files of water depths -------------------------------------------
+depth_path <- "raster_files"
+
+# read raster-files ----------------------------------------------------
+depth_2 <- raster(file.path(depth_path, "Landquart_results_depth_2.tif"))
+
+
+# Set all 0-cells to NA ----------------------------------------------------
+depth_2[depth_2 == 0] <- NA
+```
+
+## b. Velocity 
+```{r}
+# Read raster-files of velocities --------------------------------------------
+v_path <- "raster_files"
+
+# read raster-files ----------------------------------------------------
+velocity_2 <- raster(file.path(v_path, "Landquart_results_velocity_2.tif"))
+
+
+# Set all 0-cells to NA ---------------------------------------------------
+velocity_2[velocity_2 == 0] <- NA
+```
+
+## c. Substrate
+```{r}
+# Read raster-file of substrate --------------------------------------------
+sub_path <- "raster_files"
+
+# Read raster-file ----------------------------------------------------
+sub <- raster(file.path(sub_path, "Landquart_results_substrate.tif"))
+
+# Set all 0-cells to NA ---------------------------------------------------
+velocity_2[velocity_2 == 0] <- NA
+```
+
+
+# 2. Habitat modelling 
+## a. Suitability Curves 
+```{r}
+# Read suitability curves 
+### WATER DEPTH ### ----------------------------------------------------
+## Tanno 2012 Rhitrhogena sp. ----------------------------------------------------
+sc_depth_Tanno_2012_Rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/Tanno_2012_Rhitrogena_sp_depth_winter.csv" 
+sc_depth_Tanno_2012_Rhithrogena <- read.csv(sc_depth_Tanno_2012_Rhithrogena_path, sep=";", dec=".", header = TRUE)
+
+### VELOCITY ### ----------------------------------------------------
+# Tanno 2012 Rhithrogena sp. ----------------------------------------------------
+sc_v_Tanno_2012_Rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/Tanno_2012_Rhithrogena_sp_velocity_winter.csv" 
+sc_v_Tanno_2012_Rhithrogena <- read.csv(sc_v_Tanno_2012_Rhithrogena_path, sep=";", dec=".", header = TRUE)
+# head(PK_FG)
+
+
+### SUBTRATE ### ----------------------------------------------------
+# Tanno 2012 Baetis sp. ----------------------------------------------------
+sc_sub_Baetis_path <- "Suitability_Curves_Data/Baetis/Tanno_2012_Baetis_sp_substrate_winter.csv" 
+sc_sub_Baetis <- read.csv(sc_sub_Baetis_path, sep=";", dec=".", header = TRUE)
+```
+
+```{r}
+# Plot suitability curves 
+### WATER DEPTH ### ----------------------------------------------------
+# Tanno 2012 Rhithrogena ----------------------------------------------------
+plot(approxfun(sc_depth_Tanno_2012_Rhithrogena$depth..m., sc_depth_Tanno_2012_Rhithrogena$Abundance, method = "linear", rule = 2), xlim = c(0,1.5), 
+     main = "Tanno 2012: Rhithrogena sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+     xlab = "Depth [m]", ylab = "HS [-]")
+
+### VELOCITY ### ----------------------------------------------------
+# Tanno 2012 Rhithrogena ----------------------------------------------------
+plot(approxfun(sc_v_Tanno_2012_Rhithrogena$Velocity..m.s., sc_v_Tanno_2012_Rhithrogena$Abundance, method = "linear", rule = 2), xlim = c(0,1.5), 
+     main = "Tanno 2012: Rhithrogena sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+     xlab = "Velocity [m/s]", ylab = "HS [-]")
+
+### SUBSTRATE ### ----------------------------------------------------
+# Tanno 2012 Baetis ----------------------------------------------------
+plot(approxfun(sc_sub_Baetis$Substrate.class, sc_sub_Baetis$Abundance, method = "linear", rule = 2), xlim = c(0,8.5), 
+     main = "Tanno 2012: Baetis sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+     xlab = "Substrate class", ylab = "HS [-]")
+```
+
+
+## b. Univariate HM 
+### b1. water depth
+```{r}
+### WATER DEPTH ###
+# Tanno 2012 Rhithrogena -------------------------------------------
+univariat_wd_rhithrogena_tanno_2012 <- function(x, y = sc_depth_Tanno_2012_Rhithrogena$depth..m., z = sc_depth_Tanno_2012_Rhithrogena$Abundance){
+  calc(x, fun = approxfun(y, z, rule = 2))
+}
+
+# ALL Q's
+HS_Tanno_2012_Rhithrogena_depth_2 <- univariat_wd_rhithrogena_tanno_2012(depth_2)
+
+
+# set coordinate system (crs) -------------------------------------------
+crs(HS_Tanno_2012_Rhithrogena_depth_2) <- "+proj=longlat"
+
+
+# save as .tif -------------------------------------------
+# Tanno 2012 Rhithrogena -------------------------------------------
+writeRaster(HS_Tanno_2012_Rhithrogena_depth_2, filename="results_univariate/HS_depth_Tanno_2012_Rhithrogena_sp_winter_2.tif", format="GTiff", overwrite=TRUE)
+```
+
+### b2. velocity
+```{r}
+### VELOCITY ###
+# Tanno 2012 Rhithrogena -------------------------------------------
+univariat_v_rhithrogena_tanno_2012 <- function(x, y = sc_v_Tanno_2012_Rhithrogena$Velocity..m.s., z = sc_v_Tanno_2012_Rhithrogena$Abundance){
+  calc(x, fun = approxfun(y, z, rule = 2))
+}
+
+# ALL Q's
+HS_Tanno_2012_Rhithrogena_velocity_2 <- univariat_v_rhithrogena_tanno_2012(velocity_2)
+
+# Koordinatensystem (crs) -------------------------------------------
+crs(HS_Tanno_2012_Rhithrogena_velocity_2) <- "+proj=longlat"
+
+
+# save as .tif -------------------------------------------
+# Tanno 2012: Rhithrogena -------------------------------------------
+writeRaster(HS_Tanno_2012_Rhithrogena_velocity_2, filename="results_univariate/HS_velocity_Tanno_2012_Rhithrogena_sp_winter_2.tif", format="GTiff", overwrite=TRUE)
+```
+
+
+### b3. substrate
+```{r}
+# Substrate (Sub)
+# Tanno 2012: Baetis sp. -------------------------------------------
+univariat_sub_baetis <- function(x, y = sc_sub_Baetis$Substrate.class, z = sc_sub_Baetis$Abundance){
+  calc(x, fun = approxfun(y, z, rule = 2))
+}
+
+# All Q's 
+HS_sub_Baetis_2 <- univariat_sub_baetis(sub_2)
+
+# Koordinatensystem (crs) -------------------------------------------
+crs(HS_sub_Baetis_2) <- "+proj=longlat"
+
+
+# save as .tif -------------------------------------------
+# Tanno 2012: Baetis sp. -------------------------------------------
+writeRaster(HS_sub_Baetis_2, filename="results_univariate/HS_sub_Baetis_sp_winter_2.tif", format="GTiff", overwrite=TRUE)
+```
+
+## c. GHSI Habitateignungsindex
+```{r}
+### GHSI ###
+# Tanno 2012 Rhithrogena -------------------------------------------
+ghsi_3 <- function(x, y, z){
+  overlay(x, y, z, 
+          sub, fun = return(sqrt(x^3*y^3*z^3)))
+}
+
+# All Q's
+GHSI_Tanno_2012_Rhithrogena_2 <- ghsi_3(HS_Tanno_2012_Rhithrogena_depth_2, HS_Tanno_2012_Rhithrogena_velocity_2, HS_sub_Rhithrogena_2)
+
+
+# HABBY Rhithrogena -------------------------------------------
+ghsi_2 <- function(x, y){
+  overlay(x, y, 
+          sub, fun = return(sqrt(x^2*y^2)))
+}
+
+# All Q's
+GHSI_HABBY_Rhithrogena_2 <- ghsi_2(HS_HABBY_Rhithrogena_depth_2, HS_HABBY_Rhithrogena_velocity_2)
+
+
+# save as .tif -------------------------------------------
+# Tanno 2012: Rhithrogena -------------------------------------------
+writeRaster(GHSI_Tanno_2012_Rhithrogena_2, filename="results_multivariate/GHSI_Tanno_2012_Rhithrogena_sp_winter_2.tif", format="GTiff", overwrite=TRUE)
+```
+
+
+### c1. frequency tables
+```{r}
+# Erstelle Haeufigkeitstabelle 
+# Tanno 2012: Rhithrogena -------------------------------------------
+freq_table <- function(x){
+ as.data.frame(freq(x, digit=1, useNA= "no"))
+}
+
+# All Q's
+freq_GHSI_Tanno_2012_Rhithrogena_2 <- freq_table(GHSI_Tanno_2012_Rhithrogena_2)
+```
+
+
+## e. Weigthed Usable Area [m2]
+```{r}
+# define function for WUA calculation -----------------------------------
+wua <- function(x){
+  cellStats(x, 'sum') * 4
+}
+
+# calculate WUA for all Q's -----------------------------------
+# Tanno 2012: Rhithrogena -------------------------------------------
+WUA_Tanno_2012_Rhithrogena_2 <- wua(GHSI_Tanno_2012_Rhithrogena_2)
+```
+
+
+## f. Wetted Area [m2]
+```{r}
+# Only for one species, as WA_tot is the same for every species
+# define function for WA_tot calculation -----------------------------------
+wa_tot <- function(x, column_name){
+  sum(x[[column_name]]) * 4
+}
+
+# Tanno 2012: Rhithrogena -------------------------------------------
+# calculate feq_table for all Q's -----------------------------------
+WA_tot_Tanno_2012_Rhithrogena_2 <- wa_tot(freq_GHSI_Tanno_2012_Rhithrogena_2, column_name = "count")
+```
+
+## g. Hydraulik Habitat Suitability [-]
+```{r}
+# Tanno 2012: Rhithrogena -------------------------------------------
+# Q2.4
+HHS_Tanno_2012_Rhithrogena_2 <- WUA_Tanno_2012_Rhithrogena_2/WA_tot_Tanno_2012_Rhithrogena_2
+```
+
+# 4. make dataframe and .csv of calculated indices 
+```{r}
+# data frame WUA and HHS -------------------------------------------
+results <- data.frame(Description = c("Tanno 2012 Baetis sp."), Discharge = c(2.4), 
+                      WUA_normal = c(WUA_Tanno_2012_Baetis_2), 
+                      WUA_pers_GHSI = c(WUA_pers_Tanno_2012_Baetis_2),
+                      WUA_pers_V = c(wua_v_pers_tanno_baetis_2), 
+                      HHS = c(HHS_Tanno_2012_Baetis_2),
+                      WA_tot = c(WA_tot_Tanno_2012_Rhithrogena_2))
+
+# write data frame into .csv file -------------------------------------------
+write.csv(results, file = "results_statistics/Results_Multivariate_Habitat_Model.csv", row.names = FALSE)
+```
+
+# 2a. Veränderung Habitatverfügbarkeit in Abhängigkeit versch. Abflüsse 
+```{r}
+library("readr")
+library("tidyr")
+library("dplyr")
+library("ggplot2")
+# make data frame for plotting -------------------------------------------
+WUA_HHS <- read_delim("results_statistics/Results_Multivariate_Habitat_Model.csv")
+
+# make variable with WUA normal/persistent -----------------------------------
+# long format to plot in facet_wrap 
+WUA_normal <- WUA_HHS[ , c(1:3)]
+WUA_pers_ghsi <- WUA_HHS[ , c(1,2,4)]
+WUA_pers_v <- WUA_HHS[ , c(1,2,5)]
+
+WUA <- full_join(WUA_normal, WUA_pers_ghsi, by = c("Discharge", "Description"))
+WUA <- full_join(WUA, WUA_pers_v, by = c("Discharge", "Description"))
+
+WUA_long <- pivot_longer(WUA, cols = c(WUA_normal, WUA_pers_GHSI, WUA_pers_V), names_to = "WUA", values_to = "value")
+
+
+# Define a custom labelling function
+my_labeller <- function(variable, value) {
+  if (variable == "WUA") {
+    return(c("WUA_normal" = "WUA", "WUA_pers_GHSI" = "WUA persistent GHSI", "WUA_pers_V" = "WUA persistent velocity")[value])
+  } 
+}
+
+# Plot WUA ALL  -----------------------------------
+WUA_results <- ggplot(WUA_long, aes(Discharge, value, col = Description)) +
+  facet_wrap(WUA~Description, ncol = 3, nrow = 3, labeller = my_labeller) +
+  geom_point(size = 2) +
+  geom_line(lwd = 0.7) +
+  labs(title = "Comparing Weightes Usable Area (WUA) of three macroinvertebrates", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Macroinvertebrates") +
+  theme_gray()
+
+# HHS Plots ALL -----------------------------------
+HHS_results <- ggplot(WUA_HHS, aes(Discharge, HHS, col = Description)) +
+  facet_wrap(~Description) +
+  geom_point(size = 2) +
+  geom_line(lwd = 0.7) +
+  labs(title = "Comparing Hydraulic Habitat Suitability (HHS) of three macroinvertebrates", x = expression(paste("Discharge [", m^3/s, "]")), y = "HHS [-]", col = "Macroinvertebrates") +
+  theme_gray()
+
+# WA tot results -----------------------------------
+WA_tot_results <- ggplot(WUA_HHS, aes(Discharge, WA_tot)) +
+  geom_line(lwd = 0.7) +
+  geom_point(size = 2) +
+  labs(title = "Comparing total wetted area of 13 discharges", x = expression(paste("Discharge [", m^3/s, "]")), y = expression(paste("Wettet Area [", m^2, "]"))) +
+  theme_gray()
+```
+
+```{r}
+# save plots into .png
+# set the dimensions of the quadrat
+quadrat_width <- 30 # in cm
+quadrat_height <- 25 # in cm
+
+# WUA 
+ggsave(filename = "results_statistics/WUA_results.png",plot = WUA_results, width = quadrat_width, height = quadrat_height, units = "cm")
+
+quadrat_width1 <- 30 # in cm
+quadrat_height1 <- 15 # in cm
+# HHS
+ggsave(filename = "results_statistics/HHS_results.png",plot = HHS_results, width = quadrat_width1, height = quadrat_height1, units = "cm")
+
+# WA_tot
+ggsave(filename = "results_statistics/WA_tot_results.png",plot = WA_tot_results, width = quadrat_width, height = quadrat_height, units = "cm")
+```
+
+
+
+
+
+

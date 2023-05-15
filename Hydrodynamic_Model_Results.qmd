@@ -1,0 +1,476 @@
+---
+title: "Hydrodynamic_Model_Results"
+format: html
+---
+
+# Packages & Working directory
+```{r}
+rm(list = ls())
+
+# load all Packages 
+library(hdf5r)
+library(sp)
+library(sf)
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(Metrics)
+library(raster)
+library(spatstat.geom)
+library(spatstat.explore)
+library(gstat)
+library(purrr)
+library(tidyr)
+library(terra)
+library(tmap)
+library(rgdal)
+```
+
+# Read results 
+```{r}
+#read results --------
+#path to results file
+h5_2  <- h5file("hydrodynamic_model_results/results_2.4.h5")
+h5_3 <-  h5file("hydrodynamic_model_results/results_3.9_qjan.h5")
+h5_4  <- h5file("hydrodynamic_model_results/results_4.6_calc.h5")
+h5_7  <- h5file("hydrodynamic_model_results/results_7_calc.h5")
+h5_9 <-  h5file("hydrodynamic_model_results/results_9.24.h5")
+h5_11 <-  h5file("hydrodynamic_model_results/results_11.4_calc.h5")
+h5_13  <- h5file("hydrodynamic_model_results/results_13.3_qmean.h5")
+h5_15  <- h5file("hydrodynamic_model_results/results_15.h5")
+h5_18  <- h5file("hydrodynamic_model_results/results_18.9.h5")
+h5_22 <-  h5file("hydrodynamic_model_results/results_22.h5")
+h5_25 <- h5file("hydrodynamic_model_results/results_25.h5")
+h5_28 <-  h5file("hydrodynamic_model_results/results_28.h5")
+h5_32 <-  h5file("hydrodynamic_model_results/results_32.69_qjun.h5")
+
+# > h5
+# Class: H5File
+# Filename: D:\Backup_daten\eDNA\basement\luca\mountain_river\results.h5
+# Access type: H5F_ACC_RDWR
+# Listing:
+#   name  obj_type dataset.dims dataset.type_class
+# .config H5I_GROUP         <NA>               <NA>
+#   CellsAll H5I_GROUP         <NA>               <NA>
+#   NodeStrg H5I_GROUP         <NA>               <NA>
+#   NodesAll H5I_GROUP         <NA>               <NA>
+#   Parameters H5I_GROUP         <NA>               <NA>
+#   RESULTS H5I_GROUP         <NA>               <NA>
+```
+
+# access sub-directories
+```{r}
+#to access the different sub-directories ("groups") use "[[]]"
+results_2 <- h5_2[["RESULTS"]][["CellsAll"]]
+results_3 <- h5_3[["RESULTS"]][["CellsAll"]]
+results_4 <- h5_4[["RESULTS"]][["CellsAll"]]
+results_7 <- h5_7[["RESULTS"]][["CellsAll"]]
+results_9 <- h5_9[["RESULTS"]][["CellsAll"]]
+results_11 <- h5_11[["RESULTS"]][["CellsAll"]]
+results_13 <- h5_13[["RESULTS"]][["CellsAll"]]
+results_15 <- h5_15[["RESULTS"]][["CellsAll"]]
+results_18 <- h5_18[["RESULTS"]][["CellsAll"]]
+results_22 <- h5_22[["RESULTS"]][["CellsAll"]]
+results_25 <- h5_25[["RESULTS"]][["CellsAll"]]
+results_28 <- h5_28[["RESULTS"]][["CellsAll"]]
+results_32 <- h5_32[["RESULTS"]][["CellsAll"]]
+```
+
+# extract velocity & waterdepth 
+```{r}
+#HydState contains results from the Hydraulic module (water depth, flow velocities), TrcState those from the Tracer Module
+#Extracting the resutls from the last timestep (0000005)
+# mabsl <- as.data.frame(results[["HydState"]][[formatC(0000024, width = 7, flag = 0)]][1,]) # Meter über Meer
+# water_depth <- as.data.frame(results[["HydState"]][[formatC(0000024, width = 7, flag = 0)]][2,]) # Wassertiefe
+# velocity <- as.data.frame(results[["HydState"]][[formatC(0000024, width = 7, flag = 0)]][3,]) # fliessgeschwindigkeit?
+#tracer4 <- as.data.frame(results[["HydState"]][[formatC(5, width = 7, flag = 0)]][4,])
+#tracer5 <- as.data.frame(results[["HydState"]][[formatC(5, width = 7, flag = 0)]][5,])
+# Results Q2.4
+bottomElevation_2 <- h5_2[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_2 <- results_2[["HydState"]][["0000003"]][1,]
+qX_2 <- results_2[["HydState"]][["0000003"]][2,]
+qY_2 <- results_2[["HydState"]][["0000003"]][3,]
+depth_2 <- waterSurfElev_2 - bottomElevation_2
+vX_2 <- qX_2/depth_2
+vY_2 <- qY_2/depth_2
+V_abs_2 <- (vX_2^2+vY_2^2)^.5
+
+# Results Q3.9
+bottomElevation_3 <- h5_3[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_3 <- results_3[["HydState"]][["0000003"]][1,]
+qX_3 <- results_3[["HydState"]][["0000003"]][2,]
+qY_3 <- results_3[["HydState"]][["0000003"]][3,]
+depth_3 <- waterSurfElev_3 - bottomElevation_3
+vX_3 <- qX_3/depth_3
+vY_3 <- qY_3/depth_3
+V_abs_3 <- (vX_3^2+vY_3^2)^.5
+
+# Results Q4.6
+bottomElevation_4 <- h5_4[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_4 <- results_4[["HydState"]][["0000003"]][1,]
+qX_4 <- results_4[["HydState"]][["0000003"]][2,]
+qY_4 <- results_4[["HydState"]][["0000003"]][3,]
+depth_4 <- waterSurfElev_4 - bottomElevation_4
+vX_4 <- qX_4/depth_4
+vY_4 <- qY_4/depth_4
+V_abs_4 <- (vX_4^2+vY_4^2)^.5
+
+# Results Q7
+bottomElevation_7 <- h5_7[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_7 <- results_7[["HydState"]][["0000024"]][1,]
+qX_7 <- results_7[["HydState"]][["0000024"]][2,]
+qY_7 <- results_7[["HydState"]][["0000024"]][3,]
+depth_7 <- waterSurfElev_7 - bottomElevation_7
+vX_7 <- qX_7/depth_7
+vY_7 <- qY_7/depth_7
+V_abs_7 <- (vX_7^2+vY_7^2)^.5
+
+# Results Q9.24
+bottomElevation_9 <- h5_9[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_9 <- results_9[["HydState"]][["0000003"]][1,]
+qX_9 <- results_9[["HydState"]][["0000003"]][2,]
+qY_9 <- results_9[["HydState"]][["0000003"]][3,]
+depth_9 <- waterSurfElev_9 - bottomElevation_9
+vX_9 <- qX_9/depth_9
+vY_9 <- qY_9/depth_9
+V_abs_9 <- (vX_9^2+vY_9^2)^.5
+
+# Results Q11.4
+bottomElevation_11 <- h5_11[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_11 <- results_11[["HydState"]][["0000003"]][1,]
+qX_11 <- results_11[["HydState"]][["0000003"]][2,]
+qY_11 <- results_11[["HydState"]][["0000003"]][3,]
+depth_11 <- waterSurfElev_11 - bottomElevation_11
+vX_11 <- qX_11/depth_11
+vY_11 <- qY_11/depth_11
+V_abs_11 <- (vX_11^2+vY_11^2)^.5
+
+# Results Q13.3
+bottomElevation_13 <- h5_13[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_13 <- results_13[["HydState"]][["0000003"]][1,]
+qX_13 <- results_13[["HydState"]][["0000003"]][2,]
+qY_13 <- results_13[["HydState"]][["0000003"]][3,]
+depth_13 <- waterSurfElev_13 - bottomElevation_13
+vX_13 <- qX_13/depth_13
+vY_13 <- qY_13/depth_13
+V_abs_13 <- (vX_13^2+vY_13^2)^.5
+
+# Results Q15
+bottomElevation_15 <- h5_15[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_15 <- results_15[["HydState"]][["0000003"]][1,]
+qX_15 <- results_15[["HydState"]][["0000003"]][2,]
+qY_15 <- results_15[["HydState"]][["0000003"]][3,]
+depth_15 <- waterSurfElev_15 - bottomElevation_15
+vX_15 <- qX_15/depth_15
+vY_15 <- qY_15/depth_15
+V_abs_15 <- (vX_15^2+vY_15^2)^.5
+
+# Results Q18
+bottomElevation_18 <- h5_18[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_18 <- results_18[["HydState"]][["0000003"]][1,]
+qX_18 <- results_18[["HydState"]][["0000003"]][2,]
+qY_18 <- results_18[["HydState"]][["0000003"]][3,]
+depth_18 <- waterSurfElev_18 - bottomElevation_18
+vX_18 <- qX_18/depth_18
+vY_18 <- qY_18/depth_18
+V_abs_18 <- (vX_18^2+vY_18^2)^.5
+
+# Results Q22
+bottomElevation_22 <- h5_22[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_22 <- results_22[["HydState"]][["0000003"]][1,]
+qX_22 <- results_22[["HydState"]][["0000003"]][2,]
+qY_22 <- results_22[["HydState"]][["0000003"]][3,]
+depth_22 <- waterSurfElev_22 - bottomElevation_22
+vX_22 <- qX_22/depth_22
+vY_22 <- qY_22/depth_22
+V_abs_22 <- (vX_22^2+vY_22^2)^.5
+
+# Results Q25
+bottomElevation_25 <- h5_25[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_25 <- results_25[["HydState"]][["0000003"]][1,]
+qX_25 <- results_25[["HydState"]][["0000003"]][2,]
+qY_25 <- results_25[["HydState"]][["0000003"]][3,]
+depth_25 <- waterSurfElev_25 - bottomElevation_25
+vX_25 <- qX_25/depth_25
+vY_25 <- qY_25/depth_25
+V_abs_25 <- (vX_25^2+vY_25^2)^.5
+
+# Results Q28
+bottomElevation_28 <- h5_28[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_28 <- results_28[["HydState"]][["0000003"]][1,]
+qX_28 <- results_28[["HydState"]][["0000003"]][2,]
+qY_28 <- results_28[["HydState"]][["0000003"]][3,]
+depth_28 <- waterSurfElev_28 - bottomElevation_28
+vX_28 <- qX_28/depth_28
+vY_28 <- qY_28/depth_28
+V_abs_28 <- (vX_28^2+vY_28^2)^.5
+
+# Results Q32.69
+bottomElevation_32 <- h5_32[["CellsAll"]][["BottomEl"]][,]
+waterSurfElev_32 <- results_32[["HydState"]][["0000003"]][1,]
+qX_32 <- results_32[["HydState"]][["0000003"]][2,]
+qY_32 <- results_32[["HydState"]][["0000003"]][3,]
+depth_32 <- waterSurfElev_32 - bottomElevation_32
+vX_32 <- qX_32/depth_32
+vY_32 <- qY_32/depth_32
+V_abs_32 <- (vX_32^2+vY_32^2)^.5
+```
+
+# Read mesh and create shp
+```{r}
+#mesh paths
+Twodm_path <- "hydrodynamic_model_results/Landquart_comp.2dm"
+
+#read mesh as a table
+Twodm <- read.table(Twodm_path, sep="", skip=2, header=F, fill=T)
+
+#split mesh in nodes and elements
+#nodes
+nd_df <- Twodm[which(Twodm$V1=="ND"),-1]
+colnames(nd_df) <- c( "ID", "X", "Y", "Z")
+nd_df$X <- as.numeric(nd_df$X)
+nd_df$Y <- as.numeric(nd_df$Y)
+
+#elements
+e3t_df <- Twodm[which(Twodm$V1=="E3T"),][,-1]
+colnames(e3t_df) <- c( "ID", "N1", "N2", "N3")
+
+
+#create table with coordinates of each triangular element (x1,y1,x2,y2,x3,y3)
+triangles <- (cbind(nd_df[e3t_df$N1, c("X","Y")], nd_df[e3t_df$N2, c("X","Y")], nd_df[e3t_df$N3, c("X","Y")], nd_df[e3t_df$N1, c("X","Y")]))
+
+tr_matrix <- matrix(unlist(triangles), ncol=8, byrow = F)
+
+#number of elements
+ID <- e3t_df$ID
+length(ID) # 38694 triangular cells in the computational mesh
+
+# Create SP object
+polys <- SpatialPolygons(mapply(function(poly, id) {
+  xy <- matrix(poly, ncol=2, byrow=TRUE)
+  Polygons(list(Polygon(xy)), ID=id)
+}, split(tr_matrix, row(tr_matrix)), ID))
+
+
+# Create SPDF (exportable as shapefile)
+mesh.sp <- SpatialPolygonsDataFrame(polys, data.frame(id=ID, row.names=ID))
+
+#link results with mesh 
+## Q2.4
+mesh.sp$waterSurfElev_2 <- as.numeric(round(waterSurfElev_2,3))
+mesh.sp$depth_2 <- as.numeric(round(depth_2,3))
+mesh.sp$V_abs_2 <- as.numeric(round(V_abs_2,3))
+mesh.sp$substrate_all <- as.numeric(7)
+
+## Q3.9
+mesh.sp$waterSurfElev_3 <- as.numeric(round(waterSurfElev_3,3))
+mesh.sp$depth_3 <- as.numeric(round(depth_3,3))
+mesh.sp$V_abs_3 <- as.numeric(round(V_abs_3,3))
+
+## Q4.6
+mesh.sp$waterSurfElev_4 <- as.numeric(round(waterSurfElev_4,3))
+mesh.sp$depth_4 <- as.numeric(round(depth_4,3))
+mesh.sp$V_abs_4 <- as.numeric(round(V_abs_4,3))
+
+## Q7
+mesh.sp$waterSurfElev_7 <- as.numeric(round(waterSurfElev_7,3))
+mesh.sp$depth_7 <- as.numeric(round(depth_7,3))
+mesh.sp$V_abs_7 <- as.numeric(round(V_abs_7,3))
+
+## Q9.24
+mesh.sp$waterSurfElev_9 <- as.numeric(round(waterSurfElev_9,3))
+mesh.sp$depth_9 <- as.numeric(round(depth_9,3))
+mesh.sp$V_abs_9 <- as.numeric(round(V_abs_9,3))
+
+## Q11.4
+mesh.sp$waterSurfElev_11 <- as.numeric(round(waterSurfElev_11,3))
+mesh.sp$depth_11 <- as.numeric(round(depth_11,3))
+mesh.sp$V_abs_11 <- as.numeric(round(V_abs_11,3))
+
+## Q13.3
+mesh.sp$waterSurfElev_13 <- as.numeric(round(waterSurfElev_13,3))
+mesh.sp$depth_13 <- as.numeric(round(depth_13,3))
+mesh.sp$V_abs_13 <- as.numeric(round(V_abs_13,3))
+
+## Q15
+mesh.sp$waterSurfElev_15 <- as.numeric(round(waterSurfElev_15,3))
+mesh.sp$depth_15 <- as.numeric(round(depth_15,3))
+mesh.sp$V_abs_15 <- as.numeric(round(V_abs_15,3))
+
+## Q18.9
+mesh.sp$waterSurfElev_18 <- as.numeric(round(waterSurfElev_18,3))
+mesh.sp$depth_18 <- as.numeric(round(depth_18,3))
+mesh.sp$V_abs_18 <- as.numeric(round(V_abs_18,3))
+
+## Q22
+mesh.sp$waterSurfElev_22 <- as.numeric(round(waterSurfElev_22,3))
+mesh.sp$depth_22 <- as.numeric(round(depth_22,3))
+mesh.sp$V_abs_22 <- as.numeric(round(V_abs_22,3))
+
+## Q25
+mesh.sp$waterSurfElev_25 <- as.numeric(round(waterSurfElev_25,3))
+mesh.sp$depth_25 <- as.numeric(round(depth_25,3))
+mesh.sp$V_abs_25 <- as.numeric(round(V_abs_25,3))
+
+## Q28
+mesh.sp$waterSurfElev_28 <- as.numeric(round(waterSurfElev_28,3))
+mesh.sp$depth_28 <- as.numeric(round(depth_28,3))
+mesh.sp$V_abs_28 <- as.numeric(round(V_abs_28,3))
+
+## Q32.69
+mesh.sp$waterSurfElev_32 <- as.numeric(round(waterSurfElev_32,3))
+mesh.sp$depth_32 <- as.numeric(round(depth_32,3))
+mesh.sp$V_abs_32 <- as.numeric(round(V_abs_32,3))
+
+#write new shapefile
+# overwrite = TRUE
+shape <- shapefile(mesh.sp, "raster_files/Landquart_results.shp", overwrite = TRUE)
+```
+
+# Create raster 
+```{r}
+# Read the shapefile
+shapefile <- shapefile("raster_files/Landquart_results.shp")
+
+# Set the raster extent using the bounding box of the shapefile
+raster_extent <- extent(shapefile)
+
+# Set the raster resolution in meters
+raster_resolution <- 0.5
+
+# Create an empty raster layer with the specified extent and resolution
+raster_layer <- raster(ext = extent(shapefile), res = raster_resolution)
+
+# Rasterize the shapefile into the empty raster layer
+##### Only for water depth #####
+## Q2.4
+raster_depth_2 <- rasterize(shapefile, raster_layer, shapefile$depth_2)
+
+## Q3.9
+raster_depth_3 <- rasterize(shapefile, raster_layer, shapefile$depth_3)
+
+## Q4.6
+raster_depth_4 <- rasterize(shapefile, raster_layer, shapefile$depth_4)
+
+## Q7
+raster_depth_7 <- rasterize(shapefile, raster_layer, shapefile$depth_7)
+
+## Q9.24
+raster_depth_9 <- rasterize(shapefile, raster_layer, shapefile$depth_9)
+
+## Q11.4
+raster_depth_11 <- rasterize(shapefile, raster_layer, shapefile$depth_11)
+
+## Q13.3
+raster_depth_13 <- rasterize(shapefile, raster_layer, shapefile$depth_13)
+
+## Q15
+raster_depth_15 <- rasterize(shapefile, raster_layer, shapefile$depth_15)
+
+## Q18
+raster_depth_18 <- rasterize(shapefile, raster_layer, shapefile$depth_18)
+
+## Q22
+raster_depth_22 <- rasterize(shapefile, raster_layer, shapefile$depth_22)
+
+## Q25
+raster_depth_25 <- rasterize(shapefile, raster_layer, shapefile$depth_25)
+
+## Q28
+raster_depth_28 <- rasterize(shapefile, raster_layer, shapefile$depth_28)
+
+## Q32.69
+raster_depth_32 <- rasterize(shapefile, raster_layer, shapefile$depth_32)
+
+##### Only for velocity #####
+## Q2.4
+raster_velocity_2 <- rasterize(shapefile, raster_layer, shapefile$V_abs_2)
+
+## Q3.9
+raster_velocity_3 <- rasterize(shapefile, raster_layer, shapefile$V_abs_3)
+
+## Q4.6
+raster_velocity_4 <- rasterize(shapefile, raster_layer, shapefile$V_abs_4)
+
+## Q7
+raster_velocity_7 <- rasterize(shapefile, raster_layer, shapefile$V_abs_7)
+
+## Q9
+raster_velocity_9 <- rasterize(shapefile, raster_layer, shapefile$V_abs_9)
+
+## Q11.4
+raster_velocity_11 <- rasterize(shapefile, raster_layer, shapefile$V_abs_11)
+
+## Q13.3
+raster_velocity_13 <- rasterize(shapefile, raster_layer, shapefile$V_abs_13)
+
+## Q15
+raster_velocity_15 <- rasterize(shapefile, raster_layer, shapefile$V_abs_15)
+
+## Q18.9
+raster_velocity_18 <- rasterize(shapefile, raster_layer, shapefile$V_abs_18)
+
+## Q22
+raster_velocity_22 <- rasterize(shapefile, raster_layer, shapefile$V_abs_22)
+
+## Q25
+raster_velocity_25 <- rasterize(shapefile, raster_layer, shapefile$V_abs_25)
+
+## Q28
+raster_velocity_28 <- rasterize(shapefile, raster_layer, shapefile$V_abs_28)
+
+## Q32.69
+raster_velocity_32 <- rasterize(shapefile, raster_layer, shapefile$V_abs_32)
+
+##### Only for substrate #####
+raster_substrate <- rasterize(shapefile, raster_layer, shapefile$substrate0)
+
+# Save the raster layer as a GeoTIFF file
+# water depth
+writeRaster(raster_depth_2, "raster_files/Landquart_results_depth_2.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_3, "raster_files/Landquart_results_depth_3.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_4, "raster_files/Landquart_results_depth_4.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_7, "raster_files/Landquart_results_depth_7.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_9, "raster_files/Landquart_results_depth_9.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_11, "raster_files/Landquart_results_depth_11.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_13, "raster_files/Landquart_results_depth_13.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_15, "raster_files/Landquart_results_depth_15.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_18, "raster_files/Landquart_results_depth_18.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_22, "raster_files/Landquart_results_depth_22.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_25, "raster_files/Landquart_results_depth_25.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_28, "raster_files/Landquart_results_depth_28.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_depth_32, "raster_files/Landquart_results_depth_32.tif", format = "GTiff", overwrite = TRUE)
+
+# velocity
+writeRaster(raster_velocity_2, "raster_files/Landquart_results_velocity_2.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_3, "raster_files/Landquart_results_velocity_3.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_4, "raster_files/Landquart_results_velocity_4.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_7, "raster_files/Landquart_results_velocity_7.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_9, "raster_files/Landquart_results_velocity_9.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_11, "raster_files/Landquart_results_velocity_11.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_13, "raster_files/Landquart_results_velocity_13.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_15, "raster_files/Landquart_results_velocity_15.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_18, "raster_files/Landquart_results_velocity_18.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_22, "raster_files/Landquart_results_velocity_22.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_25, "raster_files/Landquart_results_velocity_25.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_28, "raster_files/Landquart_results_velocity_28.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(raster_velocity_32, "raster_files/Landquart_results_velocity_32.tif", format = "GTiff", overwrite = TRUE)
+
+# substrate
+writeRaster(raster_substrate, "raster_files/Landquart_results_substrate.tif", format = "GTiff", overwrite = TRUE)
+```
+
+# Plot shape/raster to check 
+```{r}
+raster_velocity_2 <- rast("raster_files/Landquart_results_velocity_2.tif")
+raster_velocity_32 <- rast("raster_files/Landquart_results_velocity_32.tif")
+
+raster_depth_3 <- rast("raster_files/Landquart_results_depth_3.tif")
+raster_depth_32 <- rast("raster_files/Landquart_results_depth_32.tif")
+
+plot(raster_velocity_2)
+plot(raster_velocity_32)
+plot(raster_depth_3)
+plot(raster_depth_32)
+```
+
