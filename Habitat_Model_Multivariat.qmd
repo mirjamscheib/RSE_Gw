@@ -79,40 +79,40 @@ velocity_2[velocity_2 == 0] <- NA
 # Read suitability curves 
 ### WATER DEPTH ### ----------------------------------------------------
 ## Tanno 2012 Rhitrhogena sp. ----------------------------------------------------
-sc_depth_Tanno_2012_Rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/Tanno_2012_Rhitrogena_sp_depth_winter.csv" 
-sc_depth_Tanno_2012_Rhithrogena <- read.csv(sc_depth_Tanno_2012_Rhithrogena_path, sep=";", dec=".", header = TRUE)
+depth_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_water_depth.csv" 
+depth_barbus <- read.csv(depth_barbus_path, sep=";", dec=".", header = TRUE)
 
 ### VELOCITY ### ----------------------------------------------------
 # Tanno 2012 Rhithrogena sp. ----------------------------------------------------
-sc_v_Tanno_2012_Rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/Tanno_2012_Rhithrogena_sp_velocity_winter.csv" 
-sc_v_Tanno_2012_Rhithrogena <- read.csv(sc_v_Tanno_2012_Rhithrogena_path, sep=";", dec=".", header = TRUE)
+v_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_velocity.csv" 
+v_barbus <- read.csv(v_barbus_path, sep=";", dec=".", header = TRUE)
 # head(PK_FG)
 
 
 ### SUBTRATE ### ----------------------------------------------------
 # Tanno 2012 Baetis sp. ----------------------------------------------------
-sc_sub_Baetis_path <- "Suitability_Curves_Data/Baetis/Tanno_2012_Baetis_sp_substrate_winter.csv" 
-sc_sub_Baetis <- read.csv(sc_sub_Baetis_path, sep=";", dec=".", header = TRUE)
+sub_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_substrate.csv" 
+sub_barbus <- read.csv(sub_barbus_path, sep=";", dec=".", header = TRUE)
 ```
 
 ```{r}
 # Plot suitability curves 
 ### WATER DEPTH ### ----------------------------------------------------
 # Tanno 2012 Rhithrogena ----------------------------------------------------
-plot(approxfun(sc_depth_Tanno_2012_Rhithrogena$depth..m., sc_depth_Tanno_2012_Rhithrogena$Abundance, method = "linear", rule = 2), xlim = c(0,1.5), 
-     main = "Tanno 2012: Rhithrogena sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+plot(approxfun(depth_barbus$depth, depth_barbus$suitability, method = "linear", rule = 2), xlim = c(0,1.5), 
+     main = "HABBY: Barbus barbus", col = "black",  lty = 1, lwd = 2, 
      xlab = "Depth [m]", ylab = "HS [-]")
 
 ### VELOCITY ### ----------------------------------------------------
 # Tanno 2012 Rhithrogena ----------------------------------------------------
-plot(approxfun(sc_v_Tanno_2012_Rhithrogena$Velocity..m.s., sc_v_Tanno_2012_Rhithrogena$Abundance, method = "linear", rule = 2), xlim = c(0,1.5), 
-     main = "Tanno 2012: Rhithrogena sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+plot(approxfun(v_barbus$velocity, v_barbus$suitability, method = "linear", rule = 2), xlim = c(0,1.5), 
+     main = "HABBY: Barbus barbus", col = "black",  lty = 1, lwd = 2, 
      xlab = "Velocity [m/s]", ylab = "HS [-]")
 
 ### SUBSTRATE ### ----------------------------------------------------
 # Tanno 2012 Baetis ----------------------------------------------------
-plot(approxfun(sc_sub_Baetis$Substrate.class, sc_sub_Baetis$Abundance, method = "linear", rule = 2), xlim = c(0,8.5), 
-     main = "Tanno 2012: Baetis sp. (winter)", col = "black",  lty = 1, lwd = 2, 
+plot(approxfun(sub_barbus$substrate, sub_barbus$suitability, method = "linear", rule = 2), xlim = c(0,10), 
+     main = "HABBY: Barbus barbis", col = "black",  lty = 1, lwd = 2, 
      xlab = "Substrate class", ylab = "HS [-]")
 ```
 
