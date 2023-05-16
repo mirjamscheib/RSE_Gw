@@ -60,18 +60,6 @@ velocity <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
 velocity[velocity == 0] <- NA
 ```
 
-## c. Substrate
-```{r}
-# Read raster-file of substrate --------------------------------------------
-sub_path <- "raster_files"
-
-# Read raster-file ----------------------------------------------------
-sub <- raster(file.path(sub_path, "Landquart_results_substrate.tif"))
-
-# Set all 0-cells to NA ---------------------------------------------------
-velocity_2[velocity_2 == 0] <- NA
-```
-
 
 # 2. Habitat modelling 
 ## a. Suitability Curves 
@@ -160,26 +148,6 @@ writeRaster(HS_barbus_v, filename="results_univariate/HS_barbus_v.tif", format="
 ```
 
 
-### b3. substrate
-```{r}
-# Substrate (Sub)
-# Tanno 2012: Baetis sp. -------------------------------------------
-univariat_sub_baetis <- function(x, y = sc_sub_Baetis$Substrate.class, z = sc_sub_Baetis$Abundance){
-  calc(x, fun = approxfun(y, z, rule = 2))
-}
-
-# All Q's 
-HS_sub_Baetis_2 <- univariat_sub_baetis(sub_2)
-
-# Koordinatensystem (crs) -------------------------------------------
-crs(HS_sub_Baetis_2) <- "+proj=longlat"
-
-
-# save as .tif -------------------------------------------
-# Tanno 2012: Baetis sp. -------------------------------------------
-writeRaster(HS_sub_Baetis_2, filename="results_univariate/HS_sub_Baetis_sp_winter_2.tif", format="GTiff", overwrite=TRUE)
-```
-
 ## c. GHSI Habitateignungsindex
 ```{r}
 ### GHSI ###
@@ -206,6 +174,14 @@ GHSI_barbus <- ghsi_2(HS_barbus_depth, HS_barbus_v)
 # save as .tif -------------------------------------------
 # Tanno 2012: Rhithrogena -------------------------------------------
 writeRaster(GHSI_barbus, filename="results_multivariate/GHSI_barbus.tif", format="GTiff", overwrite=TRUE)
+```
+
+## Check Results with plots
+```{r}
+plot(depth)
+plot(velocity)
+plot(HS_barbus_depth)
+plot(HS_barbus_v)
 ```
 
 
