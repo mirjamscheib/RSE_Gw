@@ -132,7 +132,7 @@ writeRaster(HS_barbus_depth, filename="results_univariate/HS_barbus_depth.tif", 
 ### VELOCITY ###
 # Tanno 2012 Rhithrogena -------------------------------------------
 univariat_v <- function(x, y = v_barbus$velocity, z = v_barbus$suitability){
-  calc(x, fun = approxfun((y/100), z, rule = 2))
+  calc(x, fun = approxfun((y*100), z, rule = 2))
 }
 
 # ALL Q's
@@ -182,6 +182,21 @@ plot(depth)
 plot(velocity)
 plot(HS_barbus_depth)
 plot(HS_barbus_v)
+```
+
+## reclassify to check 
+```{r}
+# Define the reclassification table ---------------------------------------
+# In this example, values from 0 to 0.05 are set to 1,
+# values from 0.05 to 0.25 are set to 3, and so on.
+# values from VZH are in cm/s, in raster in m/s (therefore values from VZH are converted into m/s with e.g., 5cm/s / 100 = 0.05m/s)
+reclass_table <- c(0, 0.9, 1, 
+                   1, Inf, 2)
+
+# Classify rasters (include.lowest = TRUE includes 0 m/s, which will be also classified as 1) ---------------------------------------
+raster_classify <- reclassify(depth, reclass_table,  include.lowest = TRUE)
+
+plot(raster_classify)
 ```
 
 
