@@ -238,29 +238,8 @@ writeRaster(GHSI_classes_rhithrogena_impaired, filename="results_multivariate/GH
 writeRaster(GHSI_classes_rhithrogena_restored, filename="results_multivariate/GHSI_classes_rhithrogena_restored.tif", format="GTiff", overwrite=TRUE)
 ```
 
-## Check Results with plots
-```{r}
-plot(depth)
-plot(velocity)
-plot(HS_barbus_depth)
-plot(HS_barbus_v)
-```
-
-
-### !!! c1. frequency tables
-```{r}
-# Erstelle Haeufigkeitstabelle 
-# Tanno 2012: Rhithrogena -------------------------------------------
-freq_table <- function(x){
- as.data.frame(freq(x, digit=1, useNA= "no"))
-}
-
-# All Q's
-freq_GHSI_barbus_impaired <- freq_table(GHSI_barbus_impaired)
-```
-
-
-## e. Weigthed Usable Area [m2]
+# 3. Post-processing
+## a. Weigthed Usable Area [m2]
 ```{r}
 # define function for WUA calculation -----------------------------------
 wua <- function(x){
@@ -268,12 +247,28 @@ wua <- function(x){
 }
 
 # calculate WUA for all Q's -----------------------------------
-# Tanno 2012: Rhithrogena -------------------------------------------
-WUA_barbus <- wua(GHSI_barbus)
+WUA_barbus_impaired <- wua(GHSI_barbus_impaired)
+WUA_barbus_restored <- wua(GHSI_barbus_restored)
+WUA_rhithrogena_impaired <- wua(GHSI_rhithrogena_impaired)
+WUA_rhithrogena_restored <- wua(GHSI_rhithrogena_restored)
 ```
 
+## b. frequency tables
+```{r}
+# Erstelle Haeufigkeitstabelle 
+# Tanno 2012: Rhithrogena -------------------------------------------
+freq_table <- function(x){
+ as.data.frame(freq(x, digit=1, useNA= "no"))
+}
 
-## f. Wetted Area [m2]
+# All scenarios ------------------------------------------------------
+freq_GHSI_barbus_impaired <- freq_table(GHSI_barbus_impaired)
+freq_GHSI_barbus_restored <- freq_table(GHSI_barbus_restored)
+freq_GHSI_rhithrogena_impaired <- freq_table(GHSI_rhithrogena_impaired)
+freq_GHSI_rhithrogena_restored <- freq_table(GHSI_rhithrogena_restored)
+```
+
+## c. Wetted Area [m2]
 ```{r}
 # Only for one species, as WA_tot is the same for every species
 # define function for WA_tot calculation -----------------------------------
@@ -281,26 +276,26 @@ wa_tot <- function(x, column_name){
   sum(x[[column_name]]) * 4
 }
 
-# Tanno 2012: Rhithrogena -------------------------------------------
+
 # calculate feq_table for all Q's -----------------------------------
-WA_barbus <- wa_tot(freq_GHSI_barbus, column_name = "count")
+WA_barbus_impaired <- wa_tot(freq_GHSI_barbus_impaired, column_name = "count")
+WA_barbus_restored <- wa_tot(freq_GHSI_barbus_restored, column_name = "count")
+WA_rhithrogena_impaired <- wa_tot(freq_GHSI_rhithrogena_impaired, column_name = "count")
+WA_rhithrogena_restored <- wa_tot(freq_GHSI_rhithrogena_restored, column_name = "count")
 ```
 
-# 4. make dataframe and .csv of calculated indices 
+## d. make dataframe and .csv of calculated indices 
 ```{r}
 # data frame WUA and HHS -------------------------------------------
-results <- data.frame(Description = c("Tanno 2012 Baetis sp."), Discharge = c(2.4), 
-                      WUA_normal = c(WUA_Tanno_2012_Baetis_2), 
-                      WUA_pers_GHSI = c(WUA_pers_Tanno_2012_Baetis_2),
-                      WUA_pers_V = c(wua_v_pers_tanno_baetis_2), 
-                      HHS = c(HHS_Tanno_2012_Baetis_2),
-                      WA_tot = c(WA_tot_Tanno_2012_Rhithrogena_2))
+results <- data.frame(Description = c("Barbus_impaired", "Barbus_restored", "Rhithrogena_impaired", "Rhithrogena_restored"), Discharge = c(5, 5, 5, 5), 
+                      WUA = c(WUA_barbus_impaired, WUA_barbus_restored, WUA_rhithrogena_impaired, WUA_rhithrogena_restored), 
+                      WA = c(WA_barbus_impaired, WA_barbus_restored, WA_rhithrogena_impaired, WA_rhithrogena_restored))
 
 # write data frame into .csv file -------------------------------------------
 write.csv(results, file = "results_statistics/Results_Multivariate_Habitat_Model.csv", row.names = FALSE)
 ```
 
-# 2a. Veränderung Habitatverfügbarkeit in Abhängigkeit versch. Abflüsse 
+## --- e. plot results 
 ```{r}
 library("readr")
 library("tidyr")
@@ -335,21 +330,6 @@ WUA_results <- ggplot(WUA_long, aes(Discharge, value, col = Description)) +
   geom_line(lwd = 0.7) +
   labs(title = "Comparing Weightes Usable Area (WUA) of three macroinvertebrates", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Macroinvertebrates") +
   theme_gray()
-
-# HHS Plots ALL -----------------------------------
-HHS_results <- ggplot(WUA_HHS, aes(Discharge, HHS, col = Description)) +
-  facet_wrap(~Description) +
-  geom_point(size = 2) +
-  geom_line(lwd = 0.7) +
-  labs(title = "Comparing Hydraulic Habitat Suitability (HHS) of three macroinvertebrates", x = expression(paste("Discharge [", m^3/s, "]")), y = "HHS [-]", col = "Macroinvertebrates") +
-  theme_gray()
-
-# WA tot results -----------------------------------
-WA_tot_results <- ggplot(WUA_HHS, aes(Discharge, WA_tot)) +
-  geom_line(lwd = 0.7) +
-  geom_point(size = 2) +
-  labs(title = "Comparing total wetted area of 13 discharges", x = expression(paste("Discharge [", m^3/s, "]")), y = expression(paste("Wettet Area [", m^2, "]"))) +
-  theme_gray()
 ```
 
 ```{r}
@@ -360,14 +340,6 @@ quadrat_height <- 25 # in cm
 
 # WUA 
 ggsave(filename = "results_statistics/WUA_results.png",plot = WUA_results, width = quadrat_width, height = quadrat_height, units = "cm")
-
-quadrat_width1 <- 30 # in cm
-quadrat_height1 <- 15 # in cm
-# HHS
-ggsave(filename = "results_statistics/HHS_results.png",plot = HHS_results, width = quadrat_width1, height = quadrat_height1, units = "cm")
-
-# WA_tot
-ggsave(filename = "results_statistics/WA_tot_results.png",plot = WA_tot_results, width = quadrat_width, height = quadrat_height, units = "cm")
 ```
 
 
