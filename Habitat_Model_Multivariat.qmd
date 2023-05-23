@@ -40,11 +40,12 @@ pkgCheck("tidyr")
 depth_path <- "raster_files"
 
 # read raster-files ----------------------------------------------------
-depth <- raster(file.path(depth_path, "Idw_nyadp_ju1.tif"))
-
+depth_impaired <- raster(file.path(depth_path, "Idw_nyadp_ju1.tif"))
+depth_restored <- raster(file.path(depth_path, "Idw_nyadp_ju1.tif"))
 
 # Set all 0-cells to NA ----------------------------------------------------
-depth[depth == 0] <- NA
+depth_impaired[depth_impaired == 0] <- NA
+depth_restored[depth_restored == 0] <- NA
 ```
 
 ## b. Velocity 
@@ -53,11 +54,12 @@ depth[depth == 0] <- NA
 v_path <- "raster_files"
 
 # read raster-files ----------------------------------------------------
-velocity <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
-
+velocity_impaired <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
+velocity_restored <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
 
 # Set all 0-cells to NA ---------------------------------------------------
-velocity[velocity == 0] <- NA
+velocity_impaired[velocity_impaired == 0] <- NA
+velocity_restored[velocity_restored == 0] <- NA
 ```
 
 
@@ -66,21 +68,23 @@ velocity[velocity == 0] <- NA
 ```{r}
 # Read suitability curves 
 ### WATER DEPTH ### ----------------------------------------------------
-## Tanno 2012 Rhitrhogena sp. ----------------------------------------------------
+## HABBY Barbus adult ----------------------------------------------------
 depth_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_water_depth.csv" 
 depth_barbus <- read.csv(depth_barbus_path, sep=";", dec=".", header = TRUE)
 
+## HABBY Rhithrogena ----------------------------------------------------
+depth_rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/HABBY_Rhitrogena_eaton_larva_depth.csv" 
+depth_rhithrogena <- read.csv(depth_rhithrogena_path, sep=";", dec=".", header = TRUE)
+
 ### VELOCITY ### ----------------------------------------------------
-# Tanno 2012 Rhithrogena sp. ----------------------------------------------------
+# HABBY Barbus adult ----------------------------------------------------
 v_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_velocity.csv" 
 v_barbus <- read.csv(v_barbus_path, sep=";", dec=".", header = TRUE)
 # head(PK_FG)
 
-
-### SUBTRATE ### ----------------------------------------------------
-# Tanno 2012 Baetis sp. ----------------------------------------------------
-sub_barbus_path <- "Suitability_Curves_Data/RSE_Gw_HABBY/Barbus_barbus_adult_substrate.csv" 
-sub_barbus <- read.csv(sub_barbus_path, sep=";", dec=".", header = TRUE)
+## HABBY Rhithrogena ----------------------------------------------------
+v_rhithrogena_path <- "Suitability_Curves_Data/Rhithrogena/HABBY_Rhithrogena_eaton_larva_velocity.csv" 
+v_rhithrogena <- read.csv(v_rhithrogena_path, sep=";", dec=".", header = TRUE)
 ```
 
 ```{r}
@@ -109,71 +113,129 @@ plot(approxfun(sub_barbus$substrate, sub_barbus$suitability, method = "linear", 
 ### b1. water depth
 ```{r}
 ### WATER DEPTH ###
-# Tanno 2012 Rhithrogena -------------------------------------------
-univariat_wd <- function(x, y = depth_barbus$depth, z = depth_barbus$suitability){
+# functions to calculate HM -------------------------------------------
+univariat_wd_barbus <- function(x, y = depth_barbus$depth, z = depth_barbus$suitability){
   calc(x, fun = approxfun(y, z, rule = 2))
 }
 
-# ALL Q's
-HS_barbus_depth <- univariat_wd(depth)
+univariat_wd_rhithr <- function(x, y = depth_rhithrogena$depth..m., z = depth_rhithrogena$Abundance){
+  calc(x, fun = approxfun(y, z, rule = 2))
+}
+
+# ALL scenarios ----------------------------------------------------
+HS_barbus_depth_impaired <- univariat_wd_barbus(depth_impaired)
+HS_barbus_depth_restored <- univariat_wd_barbus(depth_restored)
+HS_rhithrogena_depth_impaired <- univariat_wd_rhithr(depth_impaired)
+HS_rhithrogena_depth_restored <- univariat_wd_rhithr(depth_restored)
 
 
 # set coordinate system (crs) -------------------------------------------
-crs(HS_barbus_depth) <- "+proj=longlat"
+crs(HS_barbus_depth_impaired) <- "+proj=longlat"
+crs(HS_barbus_depth_restored) <- "+proj=longlat"
+crs(HS_rhithrogena_depth_impaired) <- "+proj=longlat"
+crs(HS_rhithrogena_depth_restored) <- "+proj=longlat"
 
 
 # save as .tif -------------------------------------------
-# Tanno 2012 Rhithrogena -------------------------------------------
-writeRaster(HS_barbus_depth, filename="results_univariate/HS_barbus_depth.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_depth_impaired, filename="results_univariate/HS_barbus_depth_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_barbus_depth_restored, filename="results_univariate/HS_barbus_depth_restored.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_rhithrogena_depth_impaired, filename="results_univariate/HS_rhithrogena_depth_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_rhithrogena_depth_restored, filename="results_univariate/HS_rhithrogena_depth_restored.tif", format="GTiff", overwrite=TRUE)
 ```
 
 ### b2. velocity
 ```{r}
 ### VELOCITY ###
-# Tanno 2012 Rhithrogena -------------------------------------------
-univariat_v <- function(x, y = v_barbus$velocity, z = v_barbus$suitability){
+# functions to calculate HM -------------------------------------------
+univariat_v_barbus <- function(x, y = v_barbus$velocity, z = v_barbus$suitability){
   calc(x, fun = approxfun((y*100), z, rule = 2))
 }
 
-# ALL Q's
-HS_barbus_v <- univariat_v(velocity)
+univariat_v_rhithr <- function(x, y = v_rhithrogena$Velocity..m.s., z = v_rhithrogena$Abundance){
+  calc(x, fun = approxfun((y*100), z, rule = 2))
+}
+
+# ALL scenarios ------------------------------------------------------
+HS_barbus_v_impaired <- univariat_v_barbus(velocity_impaired)
+HS_barbus_v_restored <- univariat_v_barbus(velocity_restored)
+HS_rhithrogena_v_impaired <- univariat_v_rhithr(velocity_impaired)
+HS_rhithrogena_v_restored <- univariat_v_rhithr(velocity_restored)
 
 # Koordinatensystem (crs) -------------------------------------------
-crs(HS_barbus_v) <- "+proj=longlat"
+crs(HS_barbus_v_impaired) <- "+proj=longlat"
+crs(HS_barbus_v_restored) <- "+proj=longlat"
+crs(HS_rhithrogena_v_impaired) <- "+proj=longlat"
+crs(HS_rhithrogena_v_restored) <- "+proj=longlat"
 
 
 # save as .tif -------------------------------------------
-# Tanno 2012: Rhithrogena -------------------------------------------
-writeRaster(HS_barbus_v, filename="results_univariate/HS_barbus_v.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_impared, filename="results_univariate/HS_barbus_v_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_barbus_v_restored, filename="results_univariate/HS_barbus_v_restored.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_rhithrogena_v_impared, filename="results_univariate/HS_rhithrogena_v_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(HS_rhithrogena_v_restored, filename="results_univariate/HS_rhithrogena_v_restored.tif", format="GTiff", overwrite=TRUE)
 ```
 
 
 ## c. GHSI Habitateignungsindex
 ```{r}
 ### GHSI ###
-# Tanno 2012 Rhithrogena -------------------------------------------
-#ghsi_3 <- function(x, y, z){
- # overlay(x, y, z, 
- #         sub, fun = return(sqrt(x^3*y^3*z^3)))
-#}
-
-# All Q's
-# GHSI_Tanno_2012_Rhithrogena_2 <- ghsi_3(HS_Tanno_2012_Rhithrogena_depth_2, HS_Tanno_2012_Rhithrogena_velocity_2, HS_sub_Rhithrogena_2)
-
-
-# HABBY Rhithrogena -------------------------------------------
+# function to calculate GHSI -------------------------------------------
 ghsi_2 <- function(x, y){
   overlay(x, y, 
           sub, fun = return(sqrt(x^2*y^2)))
 }
 
-# All Q's
-GHSI_barbus <- ghsi_2(HS_barbus_depth, HS_barbus_v)
+# All scenarios ------------------------------------------------------
+GHSI_barbus_impaired <- ghsi_2(HS_barbus_depth_impaired, HS_barbus_v_impaired)
+
+GHSI_barbus_restored <- ghsi_2(HS_barbus_depth_restored, HS_barbus_v_restored)
+
+GHSI_rhithrogena_impaired <- ghsi_2(HS_rhithrogena_depth_impaired, HS_rhithrogena_v_impaired)
+
+GHSI_rhithrogena_restored <- ghsi_2(HS_rhithrogena_depth_restored, HS_rhithrogena_v_restored)
 
 
 # save as .tif -------------------------------------------
-# Tanno 2012: Rhithrogena -------------------------------------------
-writeRaster(GHSI_barbus, filename="results_multivariate/GHSI_barbus.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_impaired, filename="results_multivariate/GHSI_barbus_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_barbus_restored, filename="results_multivariate/GHSI_barbus_restored.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_rhithrogena_impaired, filename="results_multivariate/GHSI_rhithrogena_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_rhithrogena_restored, filename="results_multivariate/GHSI_rhithrogena_restored.tif", format="GTiff", overwrite=TRUE)
+```
+
+## d. GHSI classes 
+```{r}
+# Define the reclassification table ---------------------------------------
+reclass_table <- c(0, 0.1, "poor", 
+                   0.1, 0.4, "low",
+                   0.4, 0.7, "medium",
+                   0.7, 1.0, "high")
+
+# Classify rasters (include.lowest = TRUE includes 0 m/s, which will be also classified as 1) ---------------------------------------
+GHSI_classes_barbus_impaired <- reclassify(GHSI_barbus_impaired, reclass_table,  include.lowest = TRUE)
+
+GHSI_classes_barbus_restored <- reclassify(GHSI_barbus_restored, reclass_table,  include.lowest = TRUE)
+
+GHSI_classes_rhithrogena_impaired <- reclassify(GHSI_rhithrogena_impaired, reclass_table,  include.lowest = TRUE)
+
+GHSI_classes_rhithrogena_restored <- reclassify(GHSI_rhithrogena_restored, reclass_table,  include.lowest = TRUE)
+
+# save as .tif -------------------------------------------
+writeRaster(GHSI_classes_barbus_impaired, filename="results_multivariate/GHSI_classes_barbus_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_classes_barbus_restored, filename="results_multivariate/GHSI_classes_barbus_restored.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_classes_rhithrogena_impaired, filename="results_multivariate/GHSI_classes_rhithrogena_impaired.tif", format="GTiff", overwrite=TRUE)
+
+writeRaster(GHSI_classes_rhithrogena_restored, filename="results_multivariate/GHSI_classes_rhithrogena_restored.tif", format="GTiff", overwrite=TRUE)
 ```
 
 ## Check Results with plots
@@ -184,23 +246,8 @@ plot(HS_barbus_depth)
 plot(HS_barbus_v)
 ```
 
-## reclassify to check 
-```{r}
-# Define the reclassification table ---------------------------------------
-# In this example, values from 0 to 0.05 are set to 1,
-# values from 0.05 to 0.25 are set to 3, and so on.
-# values from VZH are in cm/s, in raster in m/s (therefore values from VZH are converted into m/s with e.g., 5cm/s / 100 = 0.05m/s)
-reclass_table <- c(0, 0.9, 1, 
-                   1, Inf, 2)
 
-# Classify rasters (include.lowest = TRUE includes 0 m/s, which will be also classified as 1) ---------------------------------------
-raster_classify <- reclassify(depth, reclass_table,  include.lowest = TRUE)
-
-plot(raster_classify)
-```
-
-
-### c1. frequency tables
+### !!! c1. frequency tables
 ```{r}
 # Erstelle Haeufigkeitstabelle 
 # Tanno 2012: Rhithrogena -------------------------------------------
@@ -209,7 +256,7 @@ freq_table <- function(x){
 }
 
 # All Q's
-freq_GHSI_barbus <- freq_table(GHSI_barbus)
+freq_GHSI_barbus_impaired <- freq_table(GHSI_barbus_impaired)
 ```
 
 
@@ -237,13 +284,6 @@ wa_tot <- function(x, column_name){
 # Tanno 2012: Rhithrogena -------------------------------------------
 # calculate feq_table for all Q's -----------------------------------
 WA_barbus <- wa_tot(freq_GHSI_barbus, column_name = "count")
-```
-
-## g. Hydraulik Habitat Suitability [-]
-```{r}
-# Tanno 2012: Rhithrogena -------------------------------------------
-# Q2.4
-HHS_barbus <- WUA_barbus/WA_barbus
 ```
 
 # 4. make dataframe and .csv of calculated indices 
