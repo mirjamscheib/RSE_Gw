@@ -115,13 +115,28 @@ raster_clipped <- crop(depth_restored_0106, shapefile)
 extent(depth_restored_0106) <- extent(velocity_restored_0106)
 
 # fehlermeldung 
-raster_clipped <- mask(depth_restored_0106, velocity_restored_0106)
+# raster_clipped <- mask(depth_restored_0106, velocity_restored_0106)
+
+# geht aber schneidet nicht aus 
+# raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
+
+# crop hat nicht ausgeschnitten wie es sollte.... 
+# plot(raster_clipped)
 
 # geht aber schneidet nicht aus 
 raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
+# Stimmt, es hat noch kleiine Abweichungen:
+extent(raster_clipped)[]-extent(velocity_restored_0106)[]
+# [1]  0.17417377  0.17417377 -0.06007954 -0.06007954
 
-# crop hat nicht ausgeschnitten wie es sollte.... 
-plot(raster_clipped)
+# Daher tust du lieber ein neuen raster definieren:
+raster_clipped_new <- raster(vals=values(raster_clipped),ext=extent(velocity_restored_0106),crs=crs(velocity_restored_0106),nrows=dim(velocity_restored_0106)[1],ncols=dim(velocity_restored_0106)[2])
+
+# dann setzest du alle negative Werte im FG-Raster gleich NA:
+velocity_restored_0106[velocity_restored_0106<0] <- NA
+
+# dann klappt es mit dem ausschneiden:
+raster_clipped_mask <- mask(raster_clipped_new, velocity_restored_0106)
 ```
 
 # 2. Habitat modelling 
