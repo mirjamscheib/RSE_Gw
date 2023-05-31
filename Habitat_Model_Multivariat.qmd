@@ -40,12 +40,18 @@ pkgCheck("tidyr")
 depth_path <- "raster_files"
 
 # read raster-files ----------------------------------------------------
-depth_impaired <- raster(file.path(depth_path, "Idw_nyadp_ju1.tif"))
-depth_restored <- raster(file.path(depth_path, "Idw_nyadp_ju1.tif"))
+depth_impaired_0106 <- raster(file.path(depth_path, "Impaired_0106_depth_pos.tif"))
+depth_impaired_0805 <- raster(file.path(depth_path, "Impaired_0805_depth_pos.tif"))
+depth_restored_0106 <- raster(file.path(depth_path, "Restored_0106_depth_pos.tif"))
+depth_restored_0805 <- raster(file.path(depth_path, "Restored_0805_depth_pos.tif"))
 
 # Set all 0-cells to NA ----------------------------------------------------
-depth_impaired[depth_impaired == 0] <- NA
-depth_restored[depth_restored == 0] <- NA
+depth_impaired_0106[depth_impaired_0106 == 0] <- NA
+depth_impaired_0805[depth_impaired_0805 == 0] <- NA
+depth_restored_0106[depth_restored_0106 == 0] <- NA
+depth_restored_0805[depth_restored_0805 == 0] <- NA
+
+# raster mit shapefile oder raster velocity zuschneiden 
 ```
 
 ## b. Velocity 
@@ -54,7 +60,7 @@ depth_restored[depth_restored == 0] <- NA
 v_path <- "raster_files"
 
 # read raster-files ----------------------------------------------------
-velocity_impaired <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
+velocity_impaired_0805 <- raster(file.path(v_path, "Impaired_0805_velocity.tif"))
 velocity_restored <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
 
 # Set all 0-cells to NA ---------------------------------------------------
