@@ -124,7 +124,6 @@ raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
 plot(raster_clipped)
 ```
 
-
 # 2. Habitat modelling 
 ## a. Suitability Curves 
 ```{r}
