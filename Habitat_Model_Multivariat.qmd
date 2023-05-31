@@ -30,6 +30,7 @@ pkgCheck("tibble")
 pkgCheck("readr")
 pkgCheck("dplyr")
 pkgCheck("tidyr")
+pkgCheck("sf")
 ```
 
 
@@ -46,12 +47,17 @@ depth_restored_0106 <- raster(file.path(depth_path, "Restored_0106_depth_pos.tif
 depth_restored_0805 <- raster(file.path(depth_path, "Restored_0805_depth_pos.tif"))
 
 # Set all 0-cells to NA ----------------------------------------------------
-depth_impaired_0106[depth_impaired_0106 == 0] <- NA
-depth_impaired_0805[depth_impaired_0805 == 0] <- NA
-depth_restored_0106[depth_restored_0106 == 0] <- NA
-depth_restored_0805[depth_restored_0805 == 0] <- NA
+#depth_impaired_0106[depth_impaired_0106 == 0] <- NA
+#depth_impaired_0805[depth_impaired_0805 == 0] <- NA
+#depth_restored_0106[depth_restored_0106 == 0] <- NA
+#depth_restored_0805[depth_restored_0805 == 0] <- NA
 
-# raster mit shapefile oder raster velocity zuschneiden 
+
+#writeRaster(depth_impaired_0106, "raster_files/depth_impaired_0106.tif", format = "GTiff", overwrite = TRUE)
+#writeRaster(depth_impaired_0805, "raster_files/depth_impaired_0805.tif", format = "GTiff", overwrite = TRUE)
+
+#writeRaster(depth_restored_0106, "raster_files/depth_restored_0106.tif", format = "GTiff", overwrite = TRUE)
+#writeRaster(depth_restored_0805, "raster_files/depth_restored_0805.tif", format = "GTiff", overwrite = TRUE)
 ```
 
 ## b. Velocity 
@@ -60,12 +66,62 @@ depth_restored_0805[depth_restored_0805 == 0] <- NA
 v_path <- "raster_files"
 
 # read raster-files ----------------------------------------------------
+velocity_impaired_0106 <- raster(file.path(v_path, "Impaired_0106_velocity.tif"))
 velocity_impaired_0805 <- raster(file.path(v_path, "Impaired_0805_velocity.tif"))
-velocity_restored <- raster(file.path(v_path, "Idw_nyadp_ju3.tif"))
+velocity_restored_0106 <- raster(file.path(v_path, "Restored_0106_velocity.tif"))
+velocity_restored_0805 <- raster(file.path(v_path, "Restored_0805_velocity.tif"))
 
 # Set all 0-cells to NA ---------------------------------------------------
-velocity_impaired[velocity_impaired == 0] <- NA
-velocity_restored[velocity_restored == 0] <- NA
+velocity_impaired_0106[velocity_impaired_0106 == 0] <- NA
+velocity_impaired_0805[velocity_impaired_0805 == 0] <- NA
+velocity_restored_0106[velocity_restored_0106 == 0] <- NA
+velocity_restored_0805[velocity_restored_0805 == 0] <- NA
+
+
+# Create a mask of non-NA values with all Q's ----------------------------------
+mask_impaired_0106 <- !is.na(velocity_impaired_0106)
+mask_impaired_0805 <- !is.na(velocity_impaired_0805)
+mask_restored_0106 <- !is.na(velocity_restored_0106)
+mask_restored_0805 <- !is.na(velocity_restored_0805)
+
+# clip raster extend 
+velocity_impaired_0106 <- terra::crop(velocity_impaired_0106, mask_impaired_0106)
+velocity_impaired_0805 <- terra::crop(velocity_impaired_0805, mask_impaired_0805)
+
+velocity_restored_0106 <- terra::crop(velocity_restored_0106, mask_restored_0106)
+velocity_restored_0805 <- terra::crop(velocity_restored_0805, mask_restored_0805)
+
+# save as rasters ---------------------------------------
+writeRaster(velocity_impaired_0106, "raster_files/velocity_impaired_0106.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(velocity_impaired_0805, "raster_files/velocity_impaired_0805.tif", format = "GTiff", overwrite = TRUE)
+
+writeRaster(velocity_restored_0106, "raster_files/velocity_restored_0106.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(velocity_restored_0805, "raster_files/velocity_restored_0805.tif", format = "GTiff", overwrite = TRUE)
+```
+
+## clip with shapefile
+```{r}
+# shapefile liest nicht ein, Problem mit shapefile selbst
+shapefile <- read_sf("raster_files/watermask_restored.shp")
+
+extent(depth_restored_0106) <- extent(shapefile)
+
+raster_clipped <- crop(depth_restored_0106, shapefile)
+```
+
+## clip with raster
+```{r}
+
+extent(depth_restored_0106) <- extent(velocity_restored_0106)
+
+# fehlermeldung 
+raster_clipped <- mask(depth_restored_0106, velocity_restored_0106)
+
+# geht aber schneidet nicht aus 
+raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
+
+# crop hat nicht ausgeschnitten wie es sollte.... 
+plot(raster_clipped)
 ```
 
 
@@ -129,27 +185,44 @@ univariat_wd_rhithr <- function(x, y = depth_rhithrogena$depth..m., z = depth_rh
 }
 
 # ALL scenarios ----------------------------------------------------
-HS_barbus_depth_impaired <- univariat_wd_barbus(depth_impaired)
-HS_barbus_depth_restored <- univariat_wd_barbus(depth_restored)
-HS_rhithrogena_depth_impaired <- univariat_wd_rhithr(depth_impaired)
-HS_rhithrogena_depth_restored <- univariat_wd_rhithr(depth_restored)
+HS_barbus_depth_impaired_0106 <- univariat_wd_barbus(depth_impaired_0106)
+HS_barbus_depth_impaired_0805 <- univariat_wd_barbus(depth_impaired_0805)
+
+HS_barbus_depth_restored_0106 <- univariat_wd_barbus(depth_restored_0106)
+HS_barbus_depth_restored_0805 <- univariat_wd_barbus(depth_restored_0805)
+
+HS_rhithrogena_depth_impaired_0106 <- univariat_wd_rhithr(depth_impaired_0106)
+HS_rhithrogena_depth_impaired_0805 <- univariat_wd_rhithr(depth_impaired_0805)
+
+HS_rhithrogena_depth_restored_0106 <- univariat_wd_rhithr(depth_restored_0106)
+HS_rhithrogena_depth_restored_0805 <- univariat_wd_rhithr(depth_restored_0805)
 
 
 # set coordinate system (crs) -------------------------------------------
-crs(HS_barbus_depth_impaired) <- "+proj=longlat"
-crs(HS_barbus_depth_restored) <- "+proj=longlat"
-crs(HS_rhithrogena_depth_impaired) <- "+proj=longlat"
-crs(HS_rhithrogena_depth_restored) <- "+proj=longlat"
+crs(HS_barbus_depth_impaired_0106) <- "+proj=longlat"
+crs(HS_barbus_depth_impaired_0805) <- "+proj=longlat"
 
+crs(HS_barbus_depth_restored_0106) <- "+proj=longlat"
+crs(HS_barbus_depth_restored_0805) <- "+proj=longlat"
+
+crs(HS_rhithrogena_depth_impaired_0106) <- "+proj=longlat"
+crs(HS_rhithrogena_depth_impaired_0805) <- "+proj=longlat"
+
+crs(HS_rhithrogena_depth_restored_0106) <- "+proj=longlat"
+crs(HS_rhithrogena_depth_restored_0805) <- "+proj=longlat"
 
 # save as .tif -------------------------------------------
-writeRaster(HS_barbus_depth_impaired, filename="results_univariate/HS_barbus_depth_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_depth_impaired_0106, filename="results_univariate/HS_barbus_depth_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_depth_impaired_0805, filename="results_univariate/HS_barbus_depth_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_barbus_depth_restored, filename="results_univariate/HS_barbus_depth_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_depth_restored_0106, filename="results_univariate/HS_barbus_depth_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_depth_restored_0805, filename="results_univariate/HS_barbus_depth_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_depth_impaired, filename="results_univariate/HS_rhithrogena_depth_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_depth_impaired_0106, filename="results_univariate/HS_rhithrogena_depth_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_depth_impaired_0805, filename="results_univariate/HS_rhithrogena_depth_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_depth_restored, filename="results_univariate/HS_rhithrogena_depth_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_depth_restored_0106, filename="results_univariate/HS_rhithrogena_depth_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_depth_restored_0805, filename="results_univariate/HS_rhithrogena_depth_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 ### b2. velocity
@@ -165,30 +238,49 @@ univariat_v_rhithr <- function(x, y = v_rhithrogena$Velocity..m.s., z = v_rhithr
 }
 
 # ALL scenarios ------------------------------------------------------
-HS_barbus_v_impaired <- univariat_v_barbus(velocity_impaired)
-HS_barbus_v_restored <- univariat_v_barbus(velocity_restored)
-HS_rhithrogena_v_impaired <- univariat_v_rhithr(velocity_impaired)
-HS_rhithrogena_v_restored <- univariat_v_rhithr(velocity_restored)
+HS_barbus_v_impaired_0106 <- univariat_v_barbus(velocity_impaired_0106)
+HS_barbus_v_impaired_0805 <- univariat_v_barbus(velocity_impaired_0805)
+
+HS_barbus_v_restored_0106 <- univariat_v_barbus(velocity_restored_0106)
+HS_barbus_v_restored_0805 <- univariat_v_barbus(velocity_restored_0805)
+
+HS_rhithrogena_v_impaired_0106 <- univariat_v_rhithr(velocity_impaired_0106)
+HS_rhithrogena_v_impaired_0805 <- univariat_v_rhithr(velocity_impaired_0805)
+
+HS_rhithrogena_v_restored_0106 <- univariat_v_rhithr(velocity_restored_0106)
+HS_rhithrogena_v_restored_0805 <- univariat_v_rhithr(velocity_restored_0805)
+
 
 # Koordinatensystem (crs) -------------------------------------------
-crs(HS_barbus_v_impaired) <- "+proj=longlat"
-crs(HS_barbus_v_restored) <- "+proj=longlat"
-crs(HS_rhithrogena_v_impaired) <- "+proj=longlat"
-crs(HS_rhithrogena_v_restored) <- "+proj=longlat"
+crs(HS_barbus_v_impaired_0106) <- "+proj=longlat"
+crs(HS_barbus_v_impaired_0805) <- "+proj=longlat"
+
+crs(HS_barbus_v_restored_0106) <- "+proj=longlat"
+crs(HS_barbus_v_restored_0805) <- "+proj=longlat"
+
+crs(HS_rhithrogena_v_impaired_0106) <- "+proj=longlat"
+crs(HS_rhithrogena_v_impaired_0805) <- "+proj=longlat"
+
+crs(HS_rhithrogena_v_restored_0106) <- "+proj=longlat"
+crs(HS_rhithrogena_v_restored_0805) <- "+proj=longlat"
 
 
 # save as .tif -------------------------------------------
-writeRaster(HS_barbus_v_impared, filename="results_univariate/HS_barbus_v_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_impaired_0106, filename="results_univariate/HS_barbus_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_impaired_0805, filename="results_univariate/HS_barbus_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_barbus_v_restored, filename="results_univariate/HS_barbus_v_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_restored_0106, filename="results_univariate/HS_barbus_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_restored_0805, filename="results_univariate/HS_barbus_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_v_impared, filename="results_univariate/HS_rhithrogena_v_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_impaired_0106, filename="results_univariate/HS_rhithrogena_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_impaired_0805, filename="results_univariate/HS_rhithrogena_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_v_restored, filename="results_univariate/HS_rhithrogena_v_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_restored_0106, filename="results_univariate/HS_rhithrogena_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_restored_0805, filename="results_univariate/HS_rhithrogena_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 
-## c. GHSI Habitateignungsindex
+## !!! c. GHSI Habitateignungsindex
 ```{r}
 ### GHSI ###
 # function to calculate GHSI -------------------------------------------
@@ -198,23 +290,31 @@ ghsi_2 <- function(x, y){
 }
 
 # All scenarios ------------------------------------------------------
-GHSI_barbus_impaired <- ghsi_2(HS_barbus_depth_impaired, HS_barbus_v_impaired)
+GHSI_barbus_impaired_0106 <- ghsi_2(HS_barbus_depth_impaired_0106, HS_barbus_v_impaired_0106)
+GHSI_barbus_impaired_0805 <- ghsi_2(HS_barbus_depth_impaired_0805, HS_barbus_v_impaired_0805)
 
-GHSI_barbus_restored <- ghsi_2(HS_barbus_depth_restored, HS_barbus_v_restored)
+GHSI_barbus_restored_0106 <- ghsi_2(HS_barbus_depth_restored_0106, HS_barbus_v_restored_0106)
+GHSI_barbus_restored_0805 <- ghsi_2(HS_barbus_depth_restored_0805, HS_barbus_v_restored_0805)
 
-GHSI_rhithrogena_impaired <- ghsi_2(HS_rhithrogena_depth_impaired, HS_rhithrogena_v_impaired)
+GHSI_rhithrogena_impaired_0106 <- ghsi_2(HS_rhithrogena_depth_impaired_0106, HS_rhithrogena_v_impaired_0106)
+GHSI_rhithrogena_impaired_0805 <- ghsi_2(HS_rhithrogena_depth_impaired_0805, HS_rhithrogena_v_impaired_0805)
 
-GHSI_rhithrogena_restored <- ghsi_2(HS_rhithrogena_depth_restored, HS_rhithrogena_v_restored)
+GHSI_rhithrogena_restored_0106 <- ghsi_2(HS_rhithrogena_depth_restored_0106, HS_rhithrogena_v_restored_0106)
+GHSI_rhithrogena_restored_0805 <- ghsi_2(HS_rhithrogena_depth_restored_0805, HS_rhithrogena_v_restored_0805)
 
 
 # save as .tif -------------------------------------------
-writeRaster(GHSI_barbus_impaired, filename="results_multivariate/GHSI_barbus_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_impaired_0106, filename="results_multivariate/GHSI_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_impaired_0805, filename="results_multivariate/GHSI_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_barbus_restored, filename="results_multivariate/GHSI_barbus_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_restored_0106, filename="results_multivariate/GHSI_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_restored_0805, filename="results_multivariate/GHSI_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_rhithrogena_impaired, filename="results_multivariate/GHSI_rhithrogena_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_impaired_0106, filename="results_multivariate/GHSI_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_impaired_0805, filename="results_multivariate/GHSI_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_rhithrogena_restored, filename="results_multivariate/GHSI_rhithrogena_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_restored_0106, filename="results_multivariate/GHSI_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_restored_0805, filename="results_multivariate/GHSI_rhithrogena_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 ## d. GHSI classes 
@@ -226,7 +326,7 @@ reclass_table <- c(0, 0.1, "poor",
                    0.7, 1.0, "high")
 
 # Classify rasters (include.lowest = TRUE includes 0 m/s, which will be also classified as 1) ---------------------------------------
-GHSI_classes_barbus_impaired <- reclassify(GHSI_barbus_impaired, reclass_table,  include.lowest = TRUE)
+GHSI_classes_barbus_impaired_0106 <- reclassify(GHSI_barbus_impaired_0106, reclass_table,  include.lowest = TRUE)
 
 GHSI_classes_barbus_restored <- reclassify(GHSI_barbus_restored, reclass_table,  include.lowest = TRUE)
 
