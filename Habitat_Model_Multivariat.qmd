@@ -99,44 +99,42 @@ writeRaster(velocity_restored_0106, "raster_files/velocity_restored_0106.tif", f
 writeRaster(velocity_restored_0805, "raster_files/velocity_restored_0805.tif", format = "GTiff", overwrite = TRUE)
 ```
 
-## clip with shapefile
+## c. Clip Raster Depth
 ```{r}
-# shapefile liest nicht ein, Problem mit shapefile selbst
-shapefile <- read_sf("raster_files/watermask_restored.shp")
+# create clipped raster for every layer 
+clipped_restored_0106 <- crop(depth_restored_0106, velocity_restored_0106)
+clipped_restored_0805 <- crop(depth_restored_0805, velocity_restored_0805)
 
-extent(depth_restored_0106) <- extent(shapefile)
+clipped_impaired_0106 <- crop(depth_impaired_0106, velocity_impaired_0106)
+clipped_impaired_0805 <- crop(depth_impaired_0805, velocity_impaired_0805)
 
-raster_clipped <- crop(depth_restored_0106, shapefile)
-```
+# check for differences
+extent(clipped_restored_0106)[]-extent(velocity_restored_0106)[]
+extent(clipped_restored_0805)[]-extent(velocity_restored_0805)[]
 
-## clip with raster
-```{r}
+extent(clipped_impaired_0106)[]-extent(velocity_impaired_0106)[]
+extent(clipped_impaired_0805)[]-extent(velocity_impaired_0805)[]
 
-extent(depth_restored_0106) <- extent(velocity_restored_0106)
+# define new rasters
+clip_depth_restored_0106 <- raster(vals=values(clipped_restored_0106),ext=extent(velocity_restored_0106),crs=crs(velocity_restored_0106),nrows=dim(velocity_restored_0106)[1],ncols=dim(velocity_restored_0106)[2])
 
-# fehlermeldung 
-# raster_clipped <- mask(depth_restored_0106, velocity_restored_0106)
+clip_depth_restored_0805 <- raster(vals=values(clipped_restored_0805),ext=extent(velocity_restored_0805),crs=crs(velocity_restored_0805),nrows=dim(velocity_restored_0805)[1],ncols=dim(velocity_restored_0805)[2])
 
-# geht aber schneidet nicht aus 
-# raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
+clip_depth_impaired_0106 <- raster(vals=values(clipped_impaired_0106),ext=extent(velocity_impaired_0106),crs=crs(velocity_impaired_0106),nrows=dim(velocity_impaired_0106)[1],ncols=dim(velocity_impaired_0106)[2])
 
-# crop hat nicht ausgeschnitten wie es sollte.... 
-# plot(raster_clipped)
+clip_depth_impaired_0805 <- raster(vals=values(clipped_impaired_0805),ext=extent(velocity_impaired_0805),crs=crs(velocity_impaired_0805),nrows=dim(velocity_impaired_0805)[1],ncols=dim(velocity_impaired_0805)[2])
 
-# geht aber schneidet nicht aus 
-raster_clipped <- crop(depth_restored_0106, velocity_restored_0106)
-# Stimmt, es hat noch kleiine Abweichungen:
-extent(raster_clipped)[]-extent(velocity_restored_0106)[]
-# [1]  0.17417377  0.17417377 -0.06007954 -0.06007954
+# set all negative values in velocity rasters to NA 
+velocity_restored_0106[velocity_restored_0106 < 0] <- NA
+velocity_restored_0805[velocity_restored_0805 < 0] <- NA
+velocity_impaired_0106[velocity_impaired_0106 < 0] <- NA
+velocity_impaired_0805[velocity_impaired_0805 < 0] <- NA
 
-# Daher tust du lieber ein neuen raster definieren:
-raster_clipped_new <- raster(vals=values(raster_clipped),ext=extent(velocity_restored_0106),crs=crs(velocity_restored_0106),nrows=dim(velocity_restored_0106)[1],ncols=dim(velocity_restored_0106)[2])
-
-# dann setzest du alle negative Werte im FG-Raster gleich NA:
-velocity_restored_0106[velocity_restored_0106<0] <- NA
-
-# dann klappt es mit dem ausschneiden:
-raster_clipped_mask <- mask(raster_clipped_new, velocity_restored_0106)
+# mask rasters 
+depth_restored_0106 <- mask(clip_depth_restored_0106, velocity_restored_0106)
+depth_restored_0805 <- mask(clip_depth_restored_0805, velocity_restored_0805)
+depth_impaired_0106 <- mask(clip_depth_impaired_0106, velocity_impaired_0106)
+depth_impaired_0805 <- mask(clip_depth_impaired_0805, velocity_impaired_0805)
 ```
 
 # 2. Habitat modelling 
@@ -294,7 +292,7 @@ writeRaster(HS_rhithrogena_v_restored_0805, filename="results_univariate/HS_rhit
 ```
 
 
-## !!! c. GHSI Habitateignungsindex
+## c. GHSI Habitateignungsindex
 ```{r}
 ### GHSI ###
 # function to calculate GHSI -------------------------------------------
@@ -334,28 +332,41 @@ writeRaster(GHSI_rhithrogena_restored_0805, filename="results_multivariate/GHSI_
 ## d. GHSI classes 
 ```{r}
 # Define the reclassification table ---------------------------------------
-reclass_table <- c(0, 0.1, "poor", 
-                   0.1, 0.4, "low",
-                   0.4, 0.7, "medium",
-                   0.7, 1.0, "high")
+reclass_table <- c(0, 0.1, 1, 
+                   0.1, 0.4, 2,
+                   0.4, 0.7, 3,
+                   0.7, 1.0, 4)
+
+# reclass_table <- c(0, 0.1, "poor", 
+    #               0.1, 0.4, "low",
+     #              0.4, 0.7, "medium",
+      #             0.7, 1.0, "high")
 
 # Classify rasters (include.lowest = TRUE includes 0 m/s, which will be also classified as 1) ---------------------------------------
 GHSI_classes_barbus_impaired_0106 <- reclassify(GHSI_barbus_impaired_0106, reclass_table,  include.lowest = TRUE)
+GHSI_classes_barbus_impaired_0805 <- reclassify(GHSI_barbus_impaired_0805, reclass_table,  include.lowest = TRUE)
 
-GHSI_classes_barbus_restored <- reclassify(GHSI_barbus_restored, reclass_table,  include.lowest = TRUE)
+GHSI_classes_barbus_restored_0106 <- reclassify(GHSI_barbus_restored_0106, reclass_table,  include.lowest = TRUE)
+GHSI_classes_barbus_restored_0805 <- reclassify(GHSI_barbus_restored_0805, reclass_table,  include.lowest = TRUE)
 
-GHSI_classes_rhithrogena_impaired <- reclassify(GHSI_rhithrogena_impaired, reclass_table,  include.lowest = TRUE)
+GHSI_classes_rhithrogena_impaired_0106 <- reclassify(GHSI_rhithrogena_impaired_0106, reclass_table,  include.lowest = TRUE)
+GHSI_classes_rhithrogena_impaired_0805 <- reclassify(GHSI_rhithrogena_impaired_0805, reclass_table,  include.lowest = TRUE)
 
-GHSI_classes_rhithrogena_restored <- reclassify(GHSI_rhithrogena_restored, reclass_table,  include.lowest = TRUE)
+GHSI_classes_rhithrogena_restored_0106 <- reclassify(GHSI_rhithrogena_restored_0106, reclass_table,  include.lowest = TRUE)
+GHSI_classes_rhithrogena_restored_0805 <- reclassify(GHSI_rhithrogena_restored_0805, reclass_table,  include.lowest = TRUE)
 
 # save as .tif -------------------------------------------
-writeRaster(GHSI_classes_barbus_impaired, filename="results_multivariate/GHSI_classes_barbus_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_impaired_0106, filename="results_multivariate/GHSI_classes_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_impaired_0805, filename="results_multivariate/GHSI_classes_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_barbus_restored, filename="results_multivariate/GHSI_classes_barbus_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_restored_0106, filename="results_multivariate/GHSI_classes_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_restored_0805, filename="results_multivariate/GHSI_classes_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_rhithrogena_impaired, filename="results_multivariate/GHSI_classes_rhithrogena_impaired.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_impaired_0106, filename="results_multivariate/GHSI_classes_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_impaired_0805, filename="results_multivariate/GHSI_classes_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_rhithrogena_restored, filename="results_multivariate/GHSI_classes_rhithrogena_restored.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_restored_0106, filename="results_multivariate/GHSI_classes_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_restored_0805, filename="results_multivariate/GHSI_classes_rhithrogena_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 # 3. Post-processing
@@ -367,13 +378,20 @@ wua <- function(x){
 }
 
 # calculate WUA for all Q's -----------------------------------
-WUA_barbus_impaired <- wua(GHSI_barbus_impaired)
-WUA_barbus_restored <- wua(GHSI_barbus_restored)
-WUA_rhithrogena_impaired <- wua(GHSI_rhithrogena_impaired)
-WUA_rhithrogena_restored <- wua(GHSI_rhithrogena_restored)
+WUA_barbus_impaired_0106 <- wua(GHSI_barbus_impaired_0106)
+WUA_barbus_impaired_0805 <- wua(GHSI_barbus_impaired_0805)
+
+WUA_barbus_restored_0106 <- wua(GHSI_barbus_restored_0106)
+WUA_barbus_restored_0805 <- wua(GHSI_barbus_restored_0805)
+
+WUA_rhithrogena_impaired_0106 <- wua(GHSI_rhithrogena_impaired_0106)
+WUA_rhithrogena_impaired_0805 <- wua(GHSI_rhithrogena_impaired_0805)
+
+WUA_rhithrogena_restored_0106 <- wua(GHSI_rhithrogena_restored_0106)
+WUA_rhithrogena_restored_0805 <- wua(GHSI_rhithrogena_restored_0805)
 ```
 
-## b. frequency tables
+## !!! b. frequency tables
 ```{r}
 # Erstelle Haeufigkeitstabelle 
 # Tanno 2012: Rhithrogena -------------------------------------------
