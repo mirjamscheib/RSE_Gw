@@ -174,12 +174,6 @@ plot(approxfun(depth_barbus$depth, depth_barbus$suitability, method = "linear", 
 plot(approxfun(v_barbus$velocity, v_barbus$suitability, method = "linear", rule = 2), xlim = c(0,1.5), 
      main = "HABBY: Barbus barbus", col = "black",  lty = 1, lwd = 2, 
      xlab = "Velocity [m/s]", ylab = "HS [-]")
-
-### SUBSTRATE ### ----------------------------------------------------
-# Tanno 2012 Baetis ----------------------------------------------------
-plot(approxfun(sub_barbus$substrate, sub_barbus$suitability, method = "linear", rule = 2), xlim = c(0,10), 
-     main = "HABBY: Barbus barbis", col = "black",  lty = 1, lwd = 2, 
-     xlab = "Substrate class", ylab = "HS [-]")
 ```
 
 
@@ -391,7 +385,7 @@ WUA_rhithrogena_restored_0106 <- wua(GHSI_rhithrogena_restored_0106)
 WUA_rhithrogena_restored_0805 <- wua(GHSI_rhithrogena_restored_0805)
 ```
 
-## !!! b. frequency tables
+## b. frequency tables
 ```{r}
 # Erstelle Haeufigkeitstabelle 
 # Tanno 2012: Rhithrogena -------------------------------------------
@@ -400,10 +394,17 @@ freq_table <- function(x){
 }
 
 # All scenarios ------------------------------------------------------
-freq_GHSI_barbus_impaired <- freq_table(GHSI_barbus_impaired)
-freq_GHSI_barbus_restored <- freq_table(GHSI_barbus_restored)
-freq_GHSI_rhithrogena_impaired <- freq_table(GHSI_rhithrogena_impaired)
-freq_GHSI_rhithrogena_restored <- freq_table(GHSI_rhithrogena_restored)
+freq_GHSI_barbus_impaired_0106 <- freq_table(GHSI_barbus_impaired_0106)
+freq_GHSI_barbus_impaired_0805 <- freq_table(GHSI_barbus_impaired_0805)
+
+freq_GHSI_barbus_restored_0106 <- freq_table(GHSI_barbus_restored_0106)
+freq_GHSI_barbus_restored_0805 <- freq_table(GHSI_barbus_restored_0805)
+
+freq_GHSI_rhithrogena_impaired_0106 <- freq_table(GHSI_rhithrogena_impaired_0106)
+freq_GHSI_rhithrogena_impaired_0805 <- freq_table(GHSI_rhithrogena_impaired_0805)
+
+freq_GHSI_rhithrogena_restored_0106 <- freq_table(GHSI_rhithrogena_restored_0106)
+freq_GHSI_rhithrogena_restored_0805 <- freq_table(GHSI_rhithrogena_restored_0805)
 ```
 
 ## c. Wetted Area [m2]
@@ -416,18 +417,28 @@ wa_tot <- function(x, column_name){
 
 
 # calculate feq_table for all Q's -----------------------------------
-WA_barbus_impaired <- wa_tot(freq_GHSI_barbus_impaired, column_name = "count")
-WA_barbus_restored <- wa_tot(freq_GHSI_barbus_restored, column_name = "count")
-WA_rhithrogena_impaired <- wa_tot(freq_GHSI_rhithrogena_impaired, column_name = "count")
-WA_rhithrogena_restored <- wa_tot(freq_GHSI_rhithrogena_restored, column_name = "count")
+WA_barbus_impaired_0106 <- wa_tot(freq_GHSI_barbus_impaired_0106, column_name = "count")
+WA_barbus_impaired_0805 <- wa_tot(freq_GHSI_barbus_impaired_0805, column_name = "count")
+
+
+WA_barbus_restored_0106 <- wa_tot(freq_GHSI_barbus_restored_0106, column_name = "count")
+WA_barbus_restored_0805 <- wa_tot(freq_GHSI_barbus_restored_0805, column_name = "count")
+
+WA_rhithrogena_impaired_0106 <- wa_tot(freq_GHSI_rhithrogena_impaired_0106, column_name = "count")
+WA_rhithrogena_impaired_0805 <- wa_tot(freq_GHSI_rhithrogena_impaired_0805, column_name = "count")
+
+WA_rhithrogena_restored_0106 <- wa_tot(freq_GHSI_rhithrogena_restored_0106, column_name = "count")
+WA_rhithrogena_restored_0805 <- wa_tot(freq_GHSI_rhithrogena_restored_0805, column_name = "count")
+
 ```
 
 ## d. make dataframe and .csv of calculated indices 
 ```{r}
 # data frame WUA and HHS -------------------------------------------
-results <- data.frame(Description = c("Barbus_impaired", "Barbus_restored", "Rhithrogena_impaired", "Rhithrogena_restored"), Discharge = c(5, 5, 5, 5), 
-                      WUA = c(WUA_barbus_impaired, WUA_barbus_restored, WUA_rhithrogena_impaired, WUA_rhithrogena_restored), 
-                      WA = c(WA_barbus_impaired, WA_barbus_restored, WA_rhithrogena_impaired, WA_rhithrogena_restored))
+results <- data.frame(Description = c("Barbus_impaired_0106", "Barbus_impaired_0805", "Barbus_restored_0106", "Barbus_restored_0805", "Rhithrogena_impaired_0106", "Rhithrogena_impaired_0805", "Rhithrogena_restored_0106", "Rhithrogena_restored_0805"), 
+                      Discharge = c(10, 5, 10, 5, 10, 5, 10, 5),
+                      WUA = c(WUA_barbus_impaired_0106, WUA_barbus_impaired_0805, WUA_barbus_restored_0106, WUA_barbus_restored_0805, WUA_rhithrogena_impaired_0106, WUA_rhithrogena_impaired_0805, WUA_rhithrogena_restored_0106, WUA_rhithrogena_restored_0805), 
+                      WA = c(WA_barbus_impaired_0106, WA_barbus_impaired_0805, WA_barbus_restored_0106, WA_barbus_restored_0805, WA_rhithrogena_impaired_0106, WA_rhithrogena_impaired_0805, WA_rhithrogena_restored_0106, WA_rhithrogena_restored_0805))
 
 # write data frame into .csv file -------------------------------------------
 write.csv(results, file = "results_statistics/Results_Multivariate_Habitat_Model.csv", row.names = FALSE)
@@ -442,31 +453,24 @@ library("ggplot2")
 # make data frame for plotting -------------------------------------------
 WUA_HHS <- read_delim("results_statistics/Results_Multivariate_Habitat_Model.csv")
 
-# make variable with WUA normal/persistent -----------------------------------
-# long format to plot in facet_wrap 
-WUA_normal <- WUA_HHS[ , c(1:3)]
-WUA_pers_ghsi <- WUA_HHS[ , c(1,2,4)]
-WUA_pers_v <- WUA_HHS[ , c(1,2,5)]
-
-WUA <- full_join(WUA_normal, WUA_pers_ghsi, by = c("Discharge", "Description"))
-WUA <- full_join(WUA, WUA_pers_v, by = c("Discharge", "Description"))
-
-WUA_long <- pivot_longer(WUA, cols = c(WUA_normal, WUA_pers_GHSI, WUA_pers_V), names_to = "WUA", values_to = "value")
 
 
 # Define a custom labelling function
-my_labeller <- function(variable, value) {
-  if (variable == "WUA") {
-    return(c("WUA_normal" = "WUA", "WUA_pers_GHSI" = "WUA persistent GHSI", "WUA_pers_V" = "WUA persistent velocity")[value])
-  } 
-}
+#my_labeller <- function(variable, value) {
+#  if (variable == "WUA") {
+ #   return(c("WUA_normal" = "WUA", "WUA_pers_GHSI" = "WUA persistent GHSI", "WUA_pers_V" = "WUA persistent velocity")[value])
+  #} 
+#}
 
 # Plot WUA ALL  -----------------------------------
-WUA_results <- ggplot(WUA_long, aes(Discharge, value, col = Description)) +
-  facet_wrap(WUA~Description, ncol = 3, nrow = 3, labeller = my_labeller) +
+ggplot(WUA_HHS, aes(Discharge, WUA, col = Description)) +
   geom_point(size = 2) +
-  geom_line(lwd = 0.7) +
-  labs(title = "Comparing Weightes Usable Area (WUA) of three macroinvertebrates", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Macroinvertebrates") +
+  labs(title = "Comparing Weightes Usable Area (WUA) between Barbus barbus and Rhithrogena Eaton (larva)", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Species") +
+  theme_gray()
+
+ggplot(WUA_HHS, aes(Discharge, WA, col = Description)) +
+  geom_point(size = 2) +
+  labs(title = "Wetted Area (WA) between Barbus barbus and Rhithrogena Eaton (larva)", x = expression(paste("Discharge [", m^3/s, "]")), y = "WA", col = "Species") +
   theme_gray()
 ```
 
