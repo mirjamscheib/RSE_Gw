@@ -236,12 +236,16 @@ writeRaster(HS_rhithrogena_depth_restored_0805, filename="results_univariate/HS_
 ### VELOCITY ###
 # functions to calculate HM -------------------------------------------
 univariat_v_barbus <- function(x, y = v_barbus$velocity, z = v_barbus$suitability){
-  calc(x, fun = approxfun((y*100), z, rule = 2))
+  calc(x, fun = approxfun((y), z, rule = 2))
 }
 
 univariat_v_rhithr <- function(x, y = v_rhithrogena$Velocity..m.s., z = v_rhithrogena$Abundance){
-  calc(x, fun = approxfun((y*100), z, rule = 2))
+  calc(x, fun = approxfun((y), z, rule = 2))
 }
+
+#univariat_v_rhithr <- function(x, y = v_rhithrogena$Velocity..m.s., z = v_rhithrogena$Abundance){
+ # calc(x, fun = approxfun((y*100), z, rule = 2))
+#}
 
 # ALL scenarios ------------------------------------------------------
 HS_barbus_v_impaired_0106 <- univariat_v_barbus(velocity_impaired_0106)
@@ -272,17 +276,17 @@ crs(HS_rhithrogena_v_restored_0805) <- "+proj=longlat"
 
 
 # save as .tif -------------------------------------------
-writeRaster(HS_barbus_v_impaired_0106, filename="results_univariate/HS_barbus_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(HS_barbus_v_impaired_0805, filename="results_univariate/HS_barbus_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_impaired_0106, filename="results_univariate/n_HS_barbus_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_impaired_0805, filename="results_univariate/n_HS_barbus_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_barbus_v_restored_0106, filename="results_univariate/HS_barbus_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(HS_barbus_v_restored_0805, filename="results_univariate/HS_barbus_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_restored_0106, filename="results_univariate/n_HS_barbus_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_barbus_v_restored_0805, filename="results_univariate/n_HS_barbus_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_v_impaired_0106, filename="results_univariate/HS_rhithrogena_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(HS_rhithrogena_v_impaired_0805, filename="results_univariate/HS_rhithrogena_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_impaired_0106, filename="results_univariate/n_HS_rhithrogena_v_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_impaired_0805, filename="results_univariate/n_HS_rhithrogena_v_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(HS_rhithrogena_v_restored_0106, filename="results_univariate/HS_rhithrogena_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(HS_rhithrogena_v_restored_0805, filename="results_univariate/HS_rhithrogena_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_restored_0106, filename="results_univariate/n_HS_rhithrogena_v_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(HS_rhithrogena_v_restored_0805, filename="results_univariate/n_HS_rhithrogena_v_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 
@@ -310,17 +314,17 @@ GHSI_rhithrogena_restored_0805 <- ghsi_2(HS_rhithrogena_depth_restored_0805, HS_
 
 
 # save as .tif -------------------------------------------
-writeRaster(GHSI_barbus_impaired_0106, filename="results_multivariate/GHSI_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_barbus_impaired_0805, filename="results_multivariate/GHSI_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_impaired_0106, filename="results_multivariate/n_GHSI_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_impaired_0805, filename="results_multivariate/n_GHSI_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_barbus_restored_0106, filename="results_multivariate/GHSI_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_barbus_restored_0805, filename="results_multivariate/GHSI_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_restored_0106, filename="results_multivariate/n_GHSI_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_barbus_restored_0805, filename="results_multivariate/n_GHSI_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_rhithrogena_impaired_0106, filename="results_multivariate/GHSI_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_rhithrogena_impaired_0805, filename="results_multivariate/GHSI_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_impaired_0106, filename="results_multivariate/n_GHSI_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_impaired_0805, filename="results_multivariate/n_GHSI_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_rhithrogena_restored_0106, filename="results_multivariate/GHSI_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_rhithrogena_restored_0805, filename="results_multivariate/GHSI_rhithrogena_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_restored_0106, filename="results_multivariate/n_GHSI_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_rhithrogena_restored_0805, filename="results_multivariate/n_GHSI_rhithrogena_restored_0805.tif", format="GTiff", overwrite = TRUE)
 ```
 
 ## d. GHSI classes 
@@ -350,17 +354,17 @@ GHSI_classes_rhithrogena_restored_0106 <- reclassify(GHSI_rhithrogena_restored_0
 GHSI_classes_rhithrogena_restored_0805 <- reclassify(GHSI_rhithrogena_restored_0805, reclass_table,  include.lowest = TRUE)
 
 # save as .tif -------------------------------------------
-writeRaster(GHSI_classes_barbus_impaired_0106, filename="results_multivariate/GHSI_classes_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_classes_barbus_impaired_0805, filename="results_multivariate/GHSI_classes_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_impaired_0106, filename="results_multivariate/n_GHSI_classes_barbus_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_impaired_0805, filename="results_multivariate/n_GHSI_classes_barbus_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_barbus_restored_0106, filename="results_multivariate/GHSI_classes_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_classes_barbus_restored_0805, filename="results_multivariate/GHSI_classes_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_restored_0106, filename="results_multivariate/n_GHSI_classes_barbus_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_barbus_restored_0805, filename="results_multivariate/n_GHSI_classes_barbus_restored_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_rhithrogena_impaired_0106, filename="results_multivariate/GHSI_classes_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_classes_rhithrogena_impaired_0805, filename="results_multivariate/GHSI_classes_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_impaired_0106, filename="results_multivariate/n_GHSI_classes_rhithrogena_impaired_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_impaired_0805, filename="results_multivariate/n_GHSI_classes_rhithrogena_impaired_0805.tif", format="GTiff", overwrite=TRUE)
 
-writeRaster(GHSI_classes_rhithrogena_restored_0106, filename="results_multivariate/GHSI_classes_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
-writeRaster(GHSI_classes_rhithrogena_restored_0805, filename="results_multivariate/GHSI_classes_rhithrogena_restored_0805.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_restored_0106, filename="results_multivariate/n_GHSI_classes_rhithrogena_restored_0106.tif", format="GTiff", overwrite=TRUE)
+writeRaster(GHSI_classes_rhithrogena_restored_0805, filename="results_multivariate/n_GHSI_classes_rhithrogena_restored_0805.tif", format="GTiff", overwrite=TRUE)
 ```
 
 # 3. Post-processing
@@ -434,8 +438,13 @@ WA_rhithrogena_restored_0805 <- wa_tot(freq_GHSI_rhithrogena_restored_0805, colu
 
 ## d. make dataframe and .csv of calculated indices 
 ```{r}
+# Generate a sequence of dates
+july <- as.POSIXct("06-01", format = "%m%d", tz = "UTC")
+may <- as.POSIXct("05-08", format = "%m%d", tz = "UTC")
+
 # data frame WUA and HHS -------------------------------------------
-results <- data.frame(Description = c("Barbus_impaired_0106", "Barbus_impaired_0805", "Barbus_restored_0106", "Barbus_restored_0805", "Rhithrogena_impaired_0106", "Rhithrogena_impaired_0805", "Rhithrogena_restored_0106", "Rhithrogena_restored_0805"), 
+results <- data.frame(Description = c("Barbus_impaired", "Barbus_impaired", "Barbus_restored", "Barbus_restored", "Rhithrogena_impaired", "Rhithrogena_impaired", "Rhithrogena_restored", "Rhithrogena_restored"), 
+                      Date = as.POSIXct(july, may, july, may, july, may, july, may),
                       Discharge = c(10, 5, 10, 5, 10, 5, 10, 5),
                       WUA = c(WUA_barbus_impaired_0106, WUA_barbus_impaired_0805, WUA_barbus_restored_0106, WUA_barbus_restored_0805, WUA_rhithrogena_impaired_0106, WUA_rhithrogena_impaired_0805, WUA_rhithrogena_restored_0106, WUA_rhithrogena_restored_0805), 
                       WA = c(WA_barbus_impaired_0106, WA_barbus_impaired_0805, WA_barbus_restored_0106, WA_barbus_restored_0805, WA_rhithrogena_impaired_0106, WA_rhithrogena_impaired_0805, WA_rhithrogena_restored_0106, WA_rhithrogena_restored_0805))
@@ -444,7 +453,7 @@ results <- data.frame(Description = c("Barbus_impaired_0106", "Barbus_impaired_0
 write.csv(results, file = "results_statistics/Results_Multivariate_Habitat_Model.csv", row.names = FALSE)
 ```
 
-## --- e. plot results 
+## e. plot results 
 ```{r}
 library("readr")
 library("tidyr")
@@ -465,11 +474,13 @@ WUA_HHS <- read_delim("results_statistics/Results_Multivariate_Habitat_Model.csv
 # Plot WUA ALL  -----------------------------------
 ggplot(WUA_HHS, aes(Discharge, WUA, col = Description)) +
   geom_point(size = 2) +
-  labs(title = "Comparing Weightes Usable Area (WUA) between Barbus barbus and Rhithrogena Eaton (larva)", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Species") +
+  geom_line() +
+  labs(title = "Comparing Weighted Usable Area (WUA) between Barbus barbus and Rhithrogena Eaton (larva)", x = expression(paste("Discharge [", m^3/s, "]")), y = "WUA", col = "Species") +
   theme_gray()
 
 ggplot(WUA_HHS, aes(Discharge, WA, col = Description)) +
   geom_point(size = 2) +
+  geom_line() +
   labs(title = "Wetted Area (WA) between Barbus barbus and Rhithrogena Eaton (larva)", x = expression(paste("Discharge [", m^3/s, "]")), y = "WA", col = "Species") +
   theme_gray()
 ```
